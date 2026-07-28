@@ -119,7 +119,7 @@
 {% if cnfg.en_mem_stripe %}
 `define EN_MEM_STRIPE
 {% endif %}
-	
+
 package lynxTypes;
 
     // ========================---------------------------------------------
@@ -298,7 +298,7 @@ package lynxTypes;
     localparam integer RDMA_PARAMS_OFFS = 2*RDMA_VADDR_BITS + RDMA_LEN_BITS;
     localparam integer RDMA_MSN_BITS = 24;
     localparam integer RDMA_SNDRM_BITS = 8;
-    {% if cnfg.fdev =='v80' %}
+    {% if (cnfg.fdev =='v80') or (cnfg.fdev == 'vpk120') %}
     localparam integer RDMA_N_RD_OUTSTANDING = 16;
     localparam integer RDMA_N_WR_OUTSTANDING = 32;
     {% else %}
@@ -368,10 +368,10 @@ package lynxTypes;
     localparam integer N_SCHAN_BITS = clog2s({{ cnfg.n_schan }});
     localparam integer N_CHAN = {{ cnfg.n_chan }};
     localparam integer N_CHAN_BITS = clog2s({{ cnfg.n_chan }});
-    
+
     localparam integer STAT_PROBE = {{ cnfg.stat_probe }};
     localparam integer SHELL_PROBE = {{ cnfg.shell_probe }};
-    
+
     localparam integer N_REGIONS = {{ cnfg.n_reg }};
     localparam integer N_REGIONS_BITS = clog2s({{ cnfg.n_reg }});
 
@@ -379,7 +379,7 @@ package lynxTypes;
     localparam integer N_OUTSTANDING_REGION = {{ 4 * cnfg.n_outs }};
 
     localparam integer PMTU_BYTES = {{ cnfg.pmtu }};
-    
+
     localparam longint MEM_OFFSET = 64'd{{ cnfg.mem_offset }};
     localparam integer DDR_SIZE = {{ cnfg.ddr_size }};
     localparam integer HBM_SIZE = {{ cnfg.hbm_size }};
@@ -420,10 +420,10 @@ package lynxTypes;
     // Structs
     // ========================---------------------------------------------
 
-    // 
+    //
     // REQ
     //
-    
+
     typedef struct packed {
         // Opcode
         logic [OPCODE_BITS-1:0] opcode; // One of the values of coyote::CoyoteOper
@@ -491,7 +491,7 @@ package lynxTypes;
         logic last;
     } mux_shell_t;
 
-    // 
+    //
     // IRQ
     //
 
@@ -571,73 +571,73 @@ package lynxTypes;
 
     // QDMA H2C Data Stream
     typedef struct packed {
-        logic [AXI_DATA_BITS-1:0] 	tdata;      
-        logic [31:0] 				tcrc;       
-        logic [11:0] 				qid;        
-        logic [2:0]					port_id;    
-        logic						err;        
-        logic [31:0]			 	mdata;      
-        logic [5:0]			 		mty;        
-        logic 						zero_byte;  
-        logic 						rsrvd;      
-    } qdma_h2c_data_t;                          
+        logic [AXI_DATA_BITS-1:0] 	tdata;
+        logic [31:0] 				tcrc;
+        logic [11:0] 				qid;
+        logic [2:0]					port_id;
+        logic						err;
+        logic [31:0]			 	mdata;
+        logic [5:0]			 		mty;
+        logic 						zero_byte;
+        logic 						rsrvd;
+    } qdma_h2c_data_t;
 
     // QDMA H2C Command Stream
     typedef struct packed {
-        logic [63:0] 	addr;       
-        logic [15:0] 	cidx;       
-        logic  			eop;        
-        logic  			error;      
-        logic [11:0] 	func;       
-        logic [15:0] 	len;        
-        logic  			mrkr_req;   
-        logic  			no_dma;     
-        logic [2:0] 	port_id;    
-        logic [11:0] 	qid;        
-        logic  			sdi;        
-        logic  			sop;        
-        logic [6:0]     rsrvd;      
-    } qdma_h2c_cmd_t;              
+        logic [63:0] 	addr;
+        logic [15:0] 	cidx;
+        logic  			eop;
+        logic  			error;
+        logic [11:0] 	func;
+        logic [15:0] 	len;
+        logic  			mrkr_req;
+        logic  			no_dma;
+        logic [2:0] 	port_id;
+        logic [11:0] 	qid;
+        logic  			sdi;
+        logic  			sop;
+        logic [6:0]     rsrvd;
+    } qdma_h2c_cmd_t;
 
     // QDMA C2H Data Stream
     typedef struct packed {
-        logic [AXI_DATA_BITS-1:0] 	tdata;      
-        logic [31:0] 				tcrc;       
-        logic [15:0]				len;        
-        logic [11:0] 				qid;        
-        logic						has_cmpt;   
-        logic						marker;     
-        logic [2:0]					port_id;    
-        logic [6:0]					ecc;        
-        logic [5:0]			 		mty;        
-        logic [9:0]					rsrvd;      
-    } qdma_c2h_data_t;                          
+        logic [AXI_DATA_BITS-1:0] 	tdata;
+        logic [31:0] 				tcrc;
+        logic [15:0]				len;
+        logic [11:0] 				qid;
+        logic						has_cmpt;
+        logic						marker;
+        logic [2:0]					port_id;
+        logic [6:0]					ecc;
+        logic [5:0]			 		mty;
+        logic [9:0]					rsrvd;
+    } qdma_c2h_data_t;
 
     // QDMA C2H Command Stream
     typedef struct packed {
-        logic [63:0] 	addr;       
-        logic [11:0] 	qid;        
-        logic  			error;      
-        logic [11:0] 	func;       
-        logic [2:0] 	port_id;    
-        logic [6:0]		pfch_tag;   
-        logic [4:0]     rsvrd;      
-    } qdma_c2h_cmd_t;         
+        logic [63:0] 	addr;
+        logic [11:0] 	qid;
+        logic  			error;
+        logic [11:0] 	func;
+        logic [2:0] 	port_id;
+        logic [6:0]		pfch_tag;
+        logic [4:0]     rsvrd;
+    } qdma_c2h_cmd_t;
 
     // QDMA H2C Memory Mapped Bypass Descriptor
     typedef struct packed {
-        logic [63:0] 	raddr;    
-        logic [63:0] 	waddr;       
-        logic [15:0] 	cidx;       
-        logic  			error;      
-        logic [11:0] 	func;       
-        logic [15:0] 	len;        
-        logic  			mrkr_req;   
-        logic  			no_dma;     
-        logic [2:0] 	port_id;    
-        logic [11:0] 	qid;        
-        logic  			sdi;        
-    } qdma_h2c_mm_desc;              
+        logic [63:0] 	raddr;
+        logic [63:0] 	waddr;
+        logic [15:0] 	cidx;
+        logic  			error;
+        logic [11:0] 	func;
+        logic [15:0] 	len;
+        logic  			mrkr_req;
+        logic  			no_dma;
+        logic [2:0] 	port_id;
+        logic [11:0] 	qid;
+        logic  			sdi;
+    } qdma_h2c_mm_desc;
 
     //
     // RDMA
@@ -694,7 +694,7 @@ package lynxTypes;
         logic [DEST_BITS-1:0] dest;
         logic [PID_BITS-1:0] pid;
         logic [DEST_BITS-1:0] vfid;
-        logic [TCP_IP_PORT_BITS-1:0] ip_port; 
+        logic [TCP_IP_PORT_BITS-1:0] ip_port;
         logic [TCP_IP_ADDRESS_BITS-1:0] ip_address;
     } tcp_open_req_r_t;
 
@@ -708,7 +708,7 @@ package lynxTypes;
     typedef struct packed {
         logic [PID_BITS-1:0] pid; //
         logic [DEST_BITS-1:0] vfid; //
-        logic [TCP_SUCCESS_BITS-1:0] success; // 
+        logic [TCP_SUCCESS_BITS-1:0] success; //
     } tcp_open_rsp_r_t;
 
     typedef struct packed {
@@ -728,7 +728,7 @@ package lynxTypes;
     typedef struct packed {
         logic [TCP_LEN_BITS-1:0] len;
         logic [TCP_SESSION_BITS-1:0] sid;
-    } tcp_rd_pkg_t; 
+    } tcp_rd_pkg_t;
 
     typedef struct packed {
         logic [TCP_LEN_BITS-1:0] len;
@@ -785,7 +785,7 @@ package lynxTypes;
         logic [31:0] roce_retrans_counter;
         logic [15:0] tcp_session_counter;
         logic axis_stream_down;
-        logic [512 - (14*32+16+1) - 1:0] rsrvd; 
+        logic [512 - (14*32+16+1) - 1:0] rsrvd;
     } net_stat_t;
 
     // -----------------------------------------------------------------
@@ -802,7 +802,7 @@ package lynxTypes;
         end
     end
     endfunction
-    
+
     function logic is_opcode_rd_req;
     input [OPCODE_BITS-1:0] opcode;
     begin
