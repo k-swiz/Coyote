@@ -1,10 +1,10 @@
 ######################################################################################
 # This file is part of the Coyote <https://github.com/fpgasystems/Coyote>
-# 
+#
 # MIT Licence
 # Copyright (c) 2025, Systems Group, ETH Zurich
 # All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -37,7 +37,7 @@ file(MAKE_DIRECTORY ${IPREPO_DIR})
 ############################################
 ##            USER CONFIGURATION          ##
 ############################################
-# Target FPGA device; supported Alveo U55C, Alveo U280, Alveo U250, Alveo V80
+# Target FPGA device; supported Alveo U55C, Alveo U280, Alveo U250, Alveo V80, vpk120
 set(FDEV_NAME "0" CACHE STRING "Target FPGA device")
 
 ##
@@ -49,13 +49,13 @@ set(N_REGIONS 1 CACHE STRING "Number of vFPGAs")
 
 # Re-builds the static layer of Coyote, alongside the standard shell and app build
 # Not recommended for most users, as the static layer is not configurable and will very rarey require code changes
-set(BUILD_STATIC 0 CACHE STRING "Static build flow: static + shell")
+set(BUILD_STATIC 1 CACHE STRING "Static build flow: static + shell")
 
 # Builds the Coyote shell (dynamic + app layer) and links against an existing static layer checkpoint
 # Recommended for most users, since it's much faster than BUILD_STATIC and the shell is the configurable part of Coyote
-set(BUILD_SHELL 1 CACHE STRING "Build shell, linking against existing design check-point")
+set(BUILD_SHELL 0 CACHE STRING "Build shell, linking against existing design check-point")
 
-# Build the user logic (vFPGA) and link it against an existing shell 
+# Build the user logic (vFPGA) and link it against an existing shell
 set(BUILD_APP 0 CACHE STRING "Build app portion of the design (on top of existing shell config)")
 
 # Packetization size; data transfers (host, card or net) of size > PMTU_BYTES are split into multiple packets
@@ -154,7 +154,7 @@ set(EN_NET_0 1 CACHE STRING "QSFP port 0")
 # Use QSFP port 1
 set(EN_NET_1 0 CACHE STRING "QSFP port 1")
 
-# Enable host networking 
+# Enable host networking
 set(EN_HOST_NETWORKING 0 CACHE STRING "Enable host networking")
 
 ##
@@ -166,7 +166,7 @@ set(EN_PR 0 CACHE STRING "Enable application-level (vFPGA) reconfiguration")
 # Number of PR configurations; in total N_CONFIG x N_REGION apps must be provided; for more details see Example 9: Partial Reconfiguration
 set(N_CONFIG 1 CACHE STRING "Number of PR configurations (for each vFPGA)")
 
-# Floorplan for PR; for more details on floorplans, Example 9: Partial Reconfiguration 
+# Floorplan for PR; for more details on floorplans, Example 9: Partial Reconfiguration
 set(FPLAN_PATH 0 CACHE STRING "Path to vFPGA floorplan; only applicable if EN_PR=1")
 
 # Number of clock cycles after which the loaded app is considered valid (due to the ICAP done signal being lost if crossing SLR regions on the U55C)
@@ -176,7 +176,7 @@ set(EOS_TIME 1000000 CACHE STRING "End of startup time.")
 # With a floorplan, it's possible to reuse an existing routed checkpoint of the static layer, as well as do run-time shell reconfiguration
 # However, if disabled, it may be possible to achieve higher clock frequencies and better timing closure
 # Additionally, on Versal devices, which do not support nested DFX, shell reconfiguration must be disabled if application-level reconfiguration (EN_PR=1) is enabled
-set(EN_SHELL_PBLOCK 1 CACHE STRING "Enable shell pblock (floorplanning and reconfiguration)")
+set(EN_SHELL_PBLOCK 0 CACHE STRING "Enable shell pblock (floorplanning and reconfiguration)")
 
 ##
 ## CLOCKS
@@ -253,7 +253,7 @@ set(SHELL_PATH "0" CACHE STRING "External shell checkpoint")
 ##
 
 # Number of outstanding transactions
-# NOTE: If changing the default value and using a QDMA-based platform, 
+# NOTE: If changing the default value and using a QDMA-based platform,
 # the driver must be recompiled, so that QDMA_N_ACTIVE_QUEUES (in driver/include/coyote_defs.h) >= 3 * N_OUTSANDING
 set(N_OUTSTANDING 8 CACHE STRING "Number of supported outstanding transactions")
 
@@ -349,20 +349,20 @@ macro(validation_checks_hw)
         endif()
 
         ##
-        ## Set device details (part number, memory size etc.)                                                     
+        ## Set device details (part number, memory size etc.)
         ## Memory size is obtained by calculating 1 << HBM_SIZE or 1 << DDR_SIZE e.g., on the u55c,
         ## HBM_SIZE = 34, so 1 << 34 ~ 16 GB of HBM. On Versal devices, which access memory through the NoC,
         ## the addresses start from 0x4000000000, so keep track of the variable using MEM_OFFSET
         ## When using Coyote's stripe module (axi_stripe), it's necessary to know the memory size
         ## per channel (memory controller), stored in the variable MC_SIZE
         ##
-        
+
         # u55c
-        if(FDEV_NAME STREQUAL "u55c") 
+        if(FDEV_NAME STREQUAL "u55c")
             # Platform details
             set(FPGA_ARCH "ultrascale_plus")
             set(FPGA_PART xcu55c-fsvh2892-2L-e CACHE STRING "FPGA Part" FORCE)
-            
+
             # No DDR on the u55c
             set(DDR_SIZE 0)
             set(N_DDR_CHAN 0)
@@ -375,7 +375,7 @@ macro(validation_checks_hw)
             set(MC_SIZE 29)
             set(N_STRIPE_CHAN 32)
             set(MEM_OFFSET 0)
-        
+
         # u250
         elseif(FDEV_NAME STREQUAL "u250")
             # Platform details
@@ -385,16 +385,16 @@ macro(validation_checks_hw)
             # DDR configuration
             set(DDR_SIZE 34)
             set(N_DDR_CHAN 1)
-            
+
             # No HBM on the u250
             set(HCLK_F 1)
             set(HBM_SIZE 0)
-            
+
             # Striping
-            set(MC_SIZE ${DDR_SIZE}) 
+            set(MC_SIZE ${DDR_SIZE})
             set(N_STRIPE_CHAN ${N_DDR_CHAN})
             set(MEM_OFFSET 0)
-        
+
         # u280
         elseif(FDEV_NAME STREQUAL "u280")
             # Platform details
@@ -404,40 +404,65 @@ macro(validation_checks_hw)
             # DDR configuration
             set(DDR_SIZE 34)
             set(N_DDR_CHAN 1)
-            
+
             # HBM configuration
             set(HCLK_F 450)
             set(HBM_SIZE 33)
 
             # Striping
-            set(MC_SIZE ${DDR_SIZE}) 
+            set(MC_SIZE ${DDR_SIZE})
             set(N_STRIPE_CHAN ${N_DDR_CHAN})
             set(MEM_OFFSET 0)
-        
+
         # v80
         elseif(FDEV_NAME STREQUAL "v80")
             # Platform details
             set(FPGA_ARCH "versal")
             set(FPGA_PART xcv80-lsva4737-2MHP-e-S CACHE STRING "FPGA Part" FORCE)
-        
+
             # TODO (Versal): The V80 also includes DDR memory, which we could support in the future
             set(DDR_SIZE 0)
             set(N_DDR_CHAN 0)
-            
+
             # HBM configuration
             set(HCLK_F 400)
             set(HBM_SIZE 35)
-            
+
             # Striping for unified HBM implementation
             set(MC_SIZE 30)
             set(N_STRIPE_CHAN 32)
             set(MEM_OFFSET 274877906944) # 0x4000000000 ~ 256 GiB
 
-            if (BUILD_SHELL OR BUILD_APP) 
+            if (BUILD_SHELL OR BUILD_APP)
                 message(" ** V80 with BUILD_SHELL=1 or BUILD_APP=1 selected, ignoring static layer clock frequency setting (SCLK_F) and defaulting to 333 MHz")
                 set(SCLK_F 333)
             endif()
-        
+
+
+        # VPK120 ; TODO: Cleanup vpk120 specifics - currently just a hack job to get it building.
+        elseif(FDEV_NAME STREQUAL "vpk120")
+            # Platform details
+            set(FPGA_ARCH "versal")
+            set(FPGA_PART xcvp1202-vsva2785-2MP-e-S CACHE STRING "FPGA Part" FORCE)
+
+            # TODO (Versal): The VPK120 uses LPDDR memory instead of HBM or older SDRAM configuration. LPDDR_DEV set below but effectively disables memory interfaces for now.
+            set(DDR_SIZE 0)
+            set(N_DDR_CHAN 0)
+
+            # HBM configuration
+            set(HCLK_F 400)
+            set(HBM_SIZE 35)
+
+            # Striping for unified HBM implementation
+            set(MC_SIZE 30)
+            set(N_STRIPE_CHAN 32)
+            set(MEM_OFFSET 274877906944) # 0x4000000000 ~ 256 GiB
+
+            if (BUILD_SHELL OR BUILD_APP)
+                message(" ** vpk120 with BUILD_SHELL=1 or BUILD_APP=1 selected, ignoring static layer clock frequency setting (SCLK_F) and defaulting to 333 MHz")
+                set(SCLK_F 333)
+            endif()
+
         # Fail on unsupported device
         else()
             message(FATAL_ERROR "Target device not supported.")
@@ -454,6 +479,7 @@ macro(validation_checks_hw)
         ##
         set(DDR_DEV "u250")
         set(HBM_DEV "u55c" "u280" "v80")
+        set(LPDDR_DEV "vpk120")
 
         list(FIND DDR_DEV ${FDEV_NAME} TMP_DEV)
         if(NOT TMP_DEV EQUAL -1)
@@ -467,6 +493,13 @@ macro(validation_checks_hw)
             set(AV_HBM 1)
         else()
             set(AV_HBM 0)
+        endif()
+
+        list(FIND LPDDR_DEV ${FDEV_NAME} TMP_DEV)
+        if(NOT TMP_DEV EQUAL -1)
+            set(AV_LPDDR 1)
+        else()
+            set(AV_LPDDR 0)
         endif()
 
         ##
@@ -491,12 +524,17 @@ macro(validation_checks_hw)
             if (NOT (PCIE_GEN EQUAL 4 OR PCIE_GEN EQUAL 5))
                 message(FATAL_ERROR "Versal devices only support PCIe Gen4x16 or Gen5x8.")
             else()
-                # PCIe transceiver signal is 16 bits for Gen4x16
-                # and 8 bits for Gen5x8
-                if (PCIE_GEN EQUAL 4)
-                    set(PCIE_GT_BITS 16)
+                #vpk120 always uses x8
+                if (FDEV_NAME STREQUAL "vpk120")
+                  set(PCIE_GT_BITS 8)
                 else()
-                    set(PCIE_GT_BITS 8)
+                  # PCIe transceiver signal is 16 bits for Gen4x16
+                  # and 8 bits for Gen5x8
+                  if (PCIE_GEN EQUAL 4)
+                     set(PCIE_GT_BITS 16)
+                  else()
+                     set(PCIE_GT_BITS 8)
+                  endif()
                 endif()
             endif()
         else()
@@ -512,7 +550,7 @@ macro(validation_checks_hw)
         set(EN_USER_REG 0)
 
         # Static synthesis does not have PR
-        if(BUILD_STATIC AND EN_PR) 
+        if(BUILD_STATIC AND EN_PR)
             message(FATAL_ERROR "Static builds do not support PR.")
         endif()
 
@@ -576,10 +614,10 @@ macro(validation_checks_hw)
         else()
             set(N_RDMA_CHAN 0)
             set(ROCE_STACK_EN 0 CACHE BOOL "RDMA stack disabled.")
-        endif() 
+        endif()
 
         if(EN_TCP OR EN_RDMA)
-            if(AV_DDR)  
+            if(AV_DDR)
                 set(EN_DCARD 1)
                 set(EN_HCARD 0)
                 if(N_DDR_CHAN EQUAL 0)
@@ -609,9 +647,9 @@ macro(validation_checks_hw)
         endif()
 
         if (EN_NET_1 AND FPGA_ARCH STREQUAL "versal")
-            message(FATAL_ERROR "Versal devices currently support networking only via QSFP port 0. Set EN_NET_1=0, EN_NET_0=")
+            message(FATAL_ERROR "Versal devices currently support networking only via QSFP port 0. Set EN_NET_1=0, EN_NET_0=1")
         endif()
-        
+
         # Mult user channels
         set(MULT_RDMA_AXI 0)
         if(N_RDMA_AXI GREATER 1)
@@ -701,7 +739,7 @@ macro(validation_checks_hw)
         endif()
 
         # To reduce PC collisions, striping is enabled on Versal devices with 'unified' HBM implementation
-        if(FPGA_ARCH STREQUAL "versal" AND HBM_IMPL STREQUAL "unified")
+        if(FPGA_ARCH STREQUAL "versal" AND EN_HCARD AND HBM_IMPL STREQUAL "unified") #TODO: Remove 'EN_HCARD'?
             set(EN_MEM_STRIPE 1)
         endif()
 
@@ -815,7 +853,7 @@ macro(load_apps)
 
     # Load shell
     MATH(EXPR NN "2 * ${N_REGIONS} * ${N_CONFIG}")
-    if(NOT ${ARGC} EQUAL ${NN}) 
+    if(NOT ${ARGC} EQUAL ${NN})
         message(FATAL_ERROR "Provide N_REGIONS * N_CONFIG apps.")
     endif()
 
@@ -825,7 +863,7 @@ macro(load_apps)
     while(c_idx LESS N_CONFIG)
         while(v_idx LESS N_REGIONS)
             set(APP_VARS "${APP_VARS}VFPGA_C${c_idx}_${v_idx};")
-            MATH(EXPR v_idx "${v_idx}+1")    
+            MATH(EXPR v_idx "${v_idx}+1")
         endwhile()
         MATH(EXPR c_idx "${c_idx}+1")
         set(v_idx 0)
@@ -845,7 +883,7 @@ macro(load_apps)
     set(APPS_ALL "")
     message("**")
     message("** ─── Applications")
-    
+
     while(c_idx LESS N_CONFIG)
         message("**   └── Config ${c_idx}")
 
@@ -859,10 +897,10 @@ macro(load_apps)
                 message(FATAL_ERROR "Wrong number of arguments provided, ${l_tmp}.")
             endif()
 
-            if(v_idx LESS NN)            
+            if(v_idx LESS NN)
                 set(TMP_P "**     ├── vFPGA ${v_idx}:")
             else()
-                set(TMP_P "**     └── vFPGA ${v_idx}:")  
+                set(TMP_P "**     └── vFPGA ${v_idx}:")
             endif()
             set(TMP_P "${TMP_P} path:")
             set(t_idx 0)
@@ -945,7 +983,7 @@ macro(gen_dep_lists)
     foreach(i RANGE ${NN_CONFIG})
         foreach(j RANGE ${NN_REGIONS})
             list(APPEND DEP_DCP_LIST_SYNTH_USER ${CMAKE_BINARY_DIR}/checkpoints/config_${i}/user_synthed_c${i}_${j}.dcp)
-        endforeach() 
+        endforeach()
     endforeach()
 
     # Link
@@ -964,7 +1002,7 @@ macro(gen_dep_lists)
             foreach(i RANGE ${NN_CONFIG})
                 foreach(j RANGE ${NN_REGIONS})
                     list(APPEND DEP_DCP_LIST_COMP ${CMAKE_BINARY_DIR}/checkpoints/config_${i}/user_synthed_c${i}_${j}.dcp)
-                endforeach() 
+                endforeach()
             endforeach()
         endif()
     else()
@@ -1004,13 +1042,13 @@ macro(gen_dep_lists)
                 foreach(i RANGE ${NN_CONFIG})
                     foreach(j RANGE ${NN_REGIONS})
                         list(APPEND DEP_DCP_LIST_BGEN ${CMAKE_BINARY_DIR}/bitstreams/config_${i}/vfpga_c${i}_${j}.bit)
-                    endforeach()    
+                    endforeach()
                 endforeach()
             else()
                 foreach(i RANGE ${NN_CONFIG})
                     foreach(j RANGE ${NN_REGIONS})
                         list(APPEND DEP_DCP_LIST_BGEN ${CMAKE_BINARY_DIR}/bitstreams/config_${i}/vfpga_c${i}_${j}.pdi)
-                    endforeach()    
+                    endforeach()
                 endforeach()
             endif()
         endif()
@@ -1049,7 +1087,7 @@ macro(gen_targets)
 
     set(DYN_CMD COMMAND ${VIVADO_BINARY} -mode tcl -source ${CMAKE_BINARY_DIR}/flow_dyn.tcl -notrace)
     set(APP_CMD COMMAND ${VIVADO_BINARY} -mode tcl -source ${CMAKE_BINARY_DIR}/flow_app.tcl -notrace)
-    
+
     set(BGEN_CMD COMMAND ${VIVADO_BINARY} -mode tcl -source ${CMAKE_BINARY_DIR}/bitgen.tcl -notrace)
 
     # Dependencies
@@ -1076,14 +1114,14 @@ macro(gen_targets)
             ${APP_PRJCT_CMD}
         )
     elseif(BUILD_SHELL)
-        add_custom_target(project 
+        add_custom_target(project
             ${NET_SYNTH_CMD}
             ${HLS_SYNTH_CMD}
             ${SHELL_PRJCT_CMD}
             ${APP_PRJCT_CMD}
         )
     elseif(BUILD_APP)
-        add_custom_target(project 
+        add_custom_target(project
             ${HLS_SYNTH_CMD}
             ${APP_PRJCT_CMD}
         )
@@ -1091,7 +1129,7 @@ macro(gen_targets)
 
     # Synth
     # -----------------------------------
-    add_custom_target(synth 
+    add_custom_target(synth
         DEPENDS ${DEP_DCP_LIST_SYNTH_USER}
     )
 
@@ -1112,7 +1150,7 @@ macro(gen_targets)
                 OUTPUT ${DEP_DCP_LIST_SYNTH_SHELL}
                 ${SYNTH_CMD_SHELL}
             )
-        
+
         elseif(BUILD_STATIC)
             add_custom_command(
                 OUTPUT ${DEP_DCP_LIST_SYNTH_SHELL}
@@ -1128,14 +1166,14 @@ macro(gen_targets)
     endif()
 
 
-    if(BUILD_SHELL OR BUILD_STATIC) 
+    if(BUILD_SHELL OR BUILD_STATIC)
         # Versal devices do not support nested DFX (shell subdivision and recombination);
         # therefore, the shell is not linked and routed with the default configuration (#0) when PR is enabled;
         # instead, we directly load synthesised DCPs and the floorplan, and run PnR for each configuration
         if (NOT (EN_PR AND FPGA_ARCH STREQUAL "versal"))
             # Linking
             # -----------------------------------
-            add_custom_target(link 
+            add_custom_target(link
                 DEPENDS ${DEP_DCP_LIST_LINK}
             )
 
@@ -1147,7 +1185,7 @@ macro(gen_targets)
 
             # Shell place & route
             # -----------------------------------
-            add_custom_target(shell 
+            add_custom_target(shell
                 DEPENDS ${DEP_DCP_LIST_COMP}
             )
 
@@ -1161,7 +1199,7 @@ macro(gen_targets)
 
     # Bitgen
     # -----------------------------------
-    add_custom_target(bitgen 
+    add_custom_target(bitgen
         DEPENDS ${DEP_DCP_LIST_BGEN}
     )
 
@@ -1184,7 +1222,7 @@ macro(gen_targets)
                 DEPENDS ${DEP_DCP_LIST_COMP}
             )
         else()
-            # On UltraScale+ devices (which support nested DFX), the partial vFPGA bitstreams are 
+            # On UltraScale+ devices (which support nested DFX), the partial vFPGA bitstreams are
             # generated by subdividing the full routed shell and running PnR on for each vFPGA configuration
             if(FPGA_ARCH STREQUAL "ultrascale_plus")
                 add_custom_command(
