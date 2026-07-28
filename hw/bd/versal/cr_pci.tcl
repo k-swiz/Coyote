@@ -1,10 +1,10 @@
 ######################################################################################
 # This file is part of the Coyote <https://github.com/fpgasystems/Coyote>
-# 
+#
 # MIT Licence
 # Copyright (c) 2025, Systems Group, ETH Zurich
 # All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -40,7 +40,7 @@ proc cr_bd_design_static { parentCell } {
   ########################################################################################################
   set bCheckIPs 1
   if { $bCheckIPs == 1 } {
-    set list_check_ips "\ 
+    set list_check_ips "\
       xilinx.com:ip:proc_sys_reset:5.0\
       xilinx.com:ip:util_vector_logic:2.0\
       xilinx.com:ip:versal_cips:3.4\
@@ -370,7 +370,206 @@ proc cr_bd_design_static { parentCell } {
     } else {
       puts "ERROR: Unsupported PCIe configuration: Gen$cnfg(pcie_gen). Supported configurations for V80 are Gen4x16 and Gen5x8."
       exit 1
-    }   
+    }
+  } elseif {$cnfg(fdev) eq "vpk120"} {
+    # Our VPK120 only supports x8 configurations, therefore both Gen5 and Gen4 will use very similar configurations.
+    # If using a single Gen5x8 QDMA controller, PCIE1 must be selected to ensure compliance with PCI SIG
+    # For more details, see: https://xilinx.github.io/AVED/latest/AVED%2BV80%2B-%2BCIPS%2BConfiguration.html#cpm5-basic-configuration
+    if {$cnfg(pcie_gen) eq 5} {
+      set versal_cips_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips:3.4 versal_cips_0 ]
+      set_property -dict [list \
+        CONFIG.BOOT_MODE {Custom} \
+        CONFIG.CLOCK_MODE {Custom} \
+        CONFIG.CPM_CONFIG { \
+          CPM_PCIE0_MODES {None} \
+          CPM_PCIE1_DMA_INTF {AXI_MM_and_AXI_Stream} \
+          CPM_PCIE1_DSC_BYPASS_RD {1} \
+          CPM_PCIE1_DSC_BYPASS_WR {1} \
+          CPM_PCIE1_MODES {DMA} \
+          CPM_PCIE1_MODE_SELECTION {Advanced} \
+          CPM_PCIE1_PF0_BAR0_QDMA_64BIT {1} \
+          CPM_PCIE1_PF0_BAR0_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR0_QDMA_PREFETCHABLE {1} \
+          CPM_PCIE1_PF0_BAR0_QDMA_SCALE {Megabytes} \
+          CPM_PCIE1_PF0_BAR0_QDMA_SIZE {1} \
+          CPM_PCIE1_PF0_BAR0_QDMA_STEERING {CPM_PCIE_NOC_0} \
+          CPM_PCIE1_PF0_BAR0_QDMA_TYPE {AXI_Bridge_Master} \
+          CPM_PCIE1_PF0_BAR1_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR2_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR2_QDMA_64BIT {1} \
+          CPM_PCIE1_PF0_BAR2_QDMA_ENABLED {1} \
+          CPM_PCIE1_PF0_BAR2_QDMA_TYPE {DMA} \
+          CPM_PCIE1_PF0_BAR3_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR4_QDMA_64BIT {1} \
+          CPM_PCIE1_PF0_BAR4_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR4_QDMA_ENABLED {1} \
+          CPM_PCIE1_PF0_BAR4_QDMA_PREFETCHABLE {1} \
+          CPM_PCIE1_PF0_BAR4_QDMA_SCALE {Megabytes} \
+          CPM_PCIE1_PF0_BAR4_QDMA_SIZE {256} \
+          CPM_PCIE1_PF0_BAR4_QDMA_STEERING {CPM_PCIE_NOC_0} \
+          CPM_PCIE1_PF0_BAR5_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_MSIX_CAP_TABLE_SIZE {0x1F} \
+          CPM_PCIE1_PF0_PCIEBAR2AXIBAR_QDMA_0 {0x020100000000} \
+          CPM_PCIE1_PF0_PCIEBAR2AXIBAR_QDMA_2 {0x0} \
+          CPM_PCIE1_PF0_PCIEBAR2AXIBAR_QDMA_4 {0x020800000000} \
+          CPM_PCIE1_PL_LINK_CAP_MAX_LINK_WIDTH {X8} \
+          CPM_PCIE1_MAX_LINK_SPEED {32.0_GT/s} \
+          CPM_PCIE1_REF_CLK_FREQ {100_MHz} \
+          PS_USE_PS_NOC_PCI_1 {1} \
+        } \
+        CONFIG.DEVICE_INTEGRITY_MODE {Custom} \
+        CONFIG.PS_PMC_CONFIG { \
+          BOOT_MODE {Custom} \
+          CLOCK_MODE {Custom} \
+          DESIGN_MODE {1} \
+          DEVICE_INTEGRITY_MODE {Custom} \
+          PCIE_APERTURES_DUAL_ENABLE {0} \
+          PCIE_APERTURES_SINGLE_ENABLE {1} \
+          PMC_CRP_PL0_REF_CTRL_FREQMHZ {33.3333333} \
+          PMC_GPIO0_MIO_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 0 .. 25}}} \
+          PMC_GPIO1_MIO_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 26 .. 51}}} \
+          PMC_MIO37 {{AUX_IO 0} {DIRECTION out} {DRIVE_STRENGTH 8mA} {OUTPUT_DATA high} {PULL pullup} {SCHMITT 0} {SLEW slow} {USAGE GPIO}} \
+          PMC_QSPI_FBCLK {{ENABLE 1} {IO {PMC_MIO 6}}} \
+          PMC_QSPI_PERIPHERAL_DATA_MODE {x4} \
+          PMC_QSPI_PERIPHERAL_ENABLE {1} \
+          PMC_QSPI_PERIPHERAL_MODE {Dual Parallel} \
+          PMC_REF_CLK_FREQMHZ {33.333333} \
+          PMC_SD1 {{CD_ENABLE 1} {CD_IO {PMC_MIO 28}} {POW_ENABLE 1} {POW_IO {PMC_MIO 51}} {RESET_ENABLE 0} {RESET_IO {PMC_MIO 12}} {WP_ENABLE 0} {WP_IO {PMC_MIO 1}}} \
+          PMC_SD1_PERIPHERAL {{CLK_100_SDR_OTAP_DLY 0x3} {CLK_200_SDR_OTAP_DLY 0x2} {CLK_50_DDR_ITAP_DLY 0x36} {CLK_50_DDR_OTAP_DLY 0x3} {CLK_50_SDR_ITAP_DLY 0x2C} {CLK_50_SDR_OTAP_DLY 0x4} {ENABLE 1} {IO\
+    {PMC_MIO 26 .. 36}}} \
+          PMC_SD1_SLOT_TYPE {SD 3.0} \
+          PMC_SMAP_PERIPHERAL {{ENABLE 0} {IO {32 Bit}}} \
+          PMC_USE_NOC_PMC_AXI0 {1} \
+          PMC_USE_PMC_NOC_AXI0 {1} \
+          PS_USE_STARTUP {1} \
+          PS_BOARD_INTERFACE {Custom} \
+          PS_I2C0_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 46 .. 47}}} \
+          PS_I2C1_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 44 .. 45}}} \
+          PS_I2CSYSMON_PERIPHERAL {{ENABLE 0} {IO {PMC_MIO 39 .. 40}}} \
+          PS_MIO7 {{AUX_IO 0} {DIRECTION in} {DRIVE_STRENGTH 8mA} {OUTPUT_DATA default} {PULL disable} {SCHMITT 0} {SLEW slow} {USAGE Reserved}} \
+          PS_MIO9 {{AUX_IO 0} {DIRECTION in} {DRIVE_STRENGTH 8mA} {OUTPUT_DATA default} {PULL disable} {SCHMITT 0} {SLEW slow} {USAGE Reserved}} \
+          PS_PCIE1_PERIPHERAL_ENABLE {0} \
+          PS_PCIE2_PERIPHERAL_ENABLE {1} \
+          PS_PCIE_EP_RESET1_IO {PS_MIO 18} \
+          PS_PCIE_EP_RESET2_IO {PS_MIO 19} \
+          PS_PCIE_RESET {ENABLE 1} \
+          PS_UART0_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 42 .. 43}}} \
+          PS_USB3_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 13 .. 25}}} \
+          PS_USE_PMCPL_CLK0 {1} \
+          SMON_ALARMS {Set_Alarms_On} \
+          SMON_ENABLE_TEMP_AVERAGING {0} \
+          SMON_INTERFACE_TO_USE {I2C} \
+          SMON_MEAS36 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCCAUX} {SUPPLY_NUM 0}} \
+          SMON_MEAS37 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCCAUX_PMC} {SUPPLY_NUM 1}} \
+          SMON_MEAS58 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCC_PMC} {SUPPLY_NUM 2}} \
+          SMON_MEAS59 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCC_PSFP} {SUPPLY_NUM 3}} \
+          SMON_MEAS60 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCC_PSLP} {SUPPLY_NUM 4}} \
+          SMON_MEAS62 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCC_SOC} {SUPPLY_NUM 5}} \
+          SMON_MEAS63 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 1.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {1 V unipolar}} {NAME VP_VN} {SUPPLY_NUM 6}} \
+          SMON_PMBUS_ADDRESS {0x18} \
+          SMON_TEMP_AVERAGING_SAMPLES {0} \
+        } \
+       ] $versal_cips_0
+    } elseif {$cnfg(pcie_gen) eq 4} {
+      # And, if using a Gen4x8 QDMA controller, PCIE1 must be selected
+      set versal_cips_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips:3.4 versal_cips_0 ]
+      set_property -dict [list \
+        CONFIG.BOOT_MODE {Custom} \
+        CONFIG.CLOCK_MODE {Custom} \
+        CONFIG.CPM_CONFIG { \
+          CPM_PCIE0_MODES {None} \
+          CPM_PCIE1_DMA_INTF {AXI_MM_and_AXI_Stream} \
+          CPM_PCIE1_DSC_BYPASS_RD {1} \
+          CPM_PCIE1_DSC_BYPASS_WR {1} \
+          CPM_PCIE1_MODES {DMA} \
+          CPM_PCIE1_MODE_SELECTION {Advanced} \
+          CPM_PCIE1_PF0_BAR0_QDMA_64BIT {1} \
+          CPM_PCIE1_PF0_BAR0_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR0_QDMA_PREFETCHABLE {1} \
+          CPM_PCIE1_PF0_BAR0_QDMA_SCALE {Megabytes} \
+          CPM_PCIE1_PF0_BAR0_QDMA_SIZE {1} \
+          CPM_PCIE1_PF0_BAR0_QDMA_STEERING {CPM_PCIE_NOC_0} \
+          CPM_PCIE1_PF0_BAR0_QDMA_TYPE {AXI_Bridge_Master} \
+          CPM_PCIE1_PF0_BAR1_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR2_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR2_QDMA_64BIT {1} \
+          CPM_PCIE1_PF0_BAR2_QDMA_ENABLED {1} \
+          CPM_PCIE1_PF0_BAR2_QDMA_TYPE {DMA} \
+          CPM_PCIE1_PF0_BAR3_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR4_QDMA_64BIT {1} \
+          CPM_PCIE1_PF0_BAR4_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_BAR4_QDMA_ENABLED {1} \
+          CPM_PCIE1_PF0_BAR4_QDMA_PREFETCHABLE {1} \
+          CPM_PCIE1_PF0_BAR4_QDMA_SCALE {Megabytes} \
+          CPM_PCIE1_PF0_BAR4_QDMA_SIZE {256} \
+          CPM_PCIE1_PF0_BAR4_QDMA_STEERING {CPM_PCIE_NOC_0} \
+          CPM_PCIE1_PF0_BAR5_QDMA_AXCACHE {0} \
+          CPM_PCIE1_PF0_MSIX_CAP_TABLE_SIZE {0x1F} \
+          CPM_PCIE1_PF0_PCIEBAR2AXIBAR_QDMA_0 {0x020100000000} \
+          CPM_PCIE1_PF0_PCIEBAR2AXIBAR_QDMA_2 {0x0} \
+          CPM_PCIE1_PF0_PCIEBAR2AXIBAR_QDMA_4 {0x020800000000} \
+          CPM_PCIE1_PL_LINK_CAP_MAX_LINK_WIDTH {X8} \
+          CPM_PCIE1_MAX_LINK_SPEED {16.0_GT/s} \
+          CPM_PCIE1_REF_CLK_FREQ {100_MHz} \
+          PS_USE_PS_NOC_PCI_1 {1} \
+        } \
+        CONFIG.DEVICE_INTEGRITY_MODE {Custom} \
+        CONFIG.PS_PMC_CONFIG { \
+          BOOT_MODE {Custom} \
+          CLOCK_MODE {Custom} \
+          DESIGN_MODE {1} \
+          DEVICE_INTEGRITY_MODE {Custom} \
+          PCIE_APERTURES_DUAL_ENABLE {0} \
+          PCIE_APERTURES_SINGLE_ENABLE {1} \
+          PMC_CRP_PL0_REF_CTRL_FREQMHZ {33.3333333} \
+          PMC_GPIO0_MIO_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 0 .. 25}}} \
+          PMC_GPIO1_MIO_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 26 .. 51}}} \
+          PMC_MIO37 {{AUX_IO 0} {DIRECTION out} {DRIVE_STRENGTH 8mA} {OUTPUT_DATA high} {PULL pullup} {SCHMITT 0} {SLEW slow} {USAGE GPIO}} \
+          PMC_QSPI_FBCLK {{ENABLE 1} {IO {PMC_MIO 6}}} \
+          PMC_QSPI_PERIPHERAL_DATA_MODE {x4} \
+          PMC_QSPI_PERIPHERAL_ENABLE {1} \
+          PMC_QSPI_PERIPHERAL_MODE {Dual Parallel} \
+          PMC_REF_CLK_FREQMHZ {33.333333} \
+          PMC_SD1 {{CD_ENABLE 1} {CD_IO {PMC_MIO 28}} {POW_ENABLE 1} {POW_IO {PMC_MIO 51}} {RESET_ENABLE 0} {RESET_IO {PMC_MIO 12}} {WP_ENABLE 0} {WP_IO {PMC_MIO 1}}} \
+          PMC_SD1_PERIPHERAL {{CLK_100_SDR_OTAP_DLY 0x3} {CLK_200_SDR_OTAP_DLY 0x2} {CLK_50_DDR_ITAP_DLY 0x36} {CLK_50_DDR_OTAP_DLY 0x3} {CLK_50_SDR_ITAP_DLY 0x2C} {CLK_50_SDR_OTAP_DLY 0x4} {ENABLE 1} {IO\
+    {PMC_MIO 26 .. 36}}} \
+          PMC_SD1_SLOT_TYPE {SD 3.0} \
+          PMC_SMAP_PERIPHERAL {{ENABLE 0} {IO {32 Bit}}} \
+          PMC_USE_NOC_PMC_AXI0 {1} \
+          PMC_USE_PMC_NOC_AXI0 {1} \
+          PS_USE_STARTUP {1} \
+          PS_BOARD_INTERFACE {Custom} \
+          PS_I2C0_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 46 .. 47}}} \
+          PS_I2C1_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 44 .. 45}}} \
+          PS_I2CSYSMON_PERIPHERAL {{ENABLE 0} {IO {PMC_MIO 39 .. 40}}} \
+          PS_MIO7 {{AUX_IO 0} {DIRECTION in} {DRIVE_STRENGTH 8mA} {OUTPUT_DATA default} {PULL disable} {SCHMITT 0} {SLEW slow} {USAGE Reserved}} \
+          PS_MIO9 {{AUX_IO 0} {DIRECTION in} {DRIVE_STRENGTH 8mA} {OUTPUT_DATA default} {PULL disable} {SCHMITT 0} {SLEW slow} {USAGE Reserved}} \
+          PS_PCIE1_PERIPHERAL_ENABLE {0} \
+          PS_PCIE2_PERIPHERAL_ENABLE {1} \
+          PS_PCIE_EP_RESET1_IO {PS_MIO 18} \
+          PS_PCIE_EP_RESET2_IO {PS_MIO 19} \
+          PS_PCIE_RESET {ENABLE 1} \
+          PS_UART0_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 42 .. 43}}} \
+          PS_USB3_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 13 .. 25}}} \
+          PS_USE_PMCPL_CLK0 {1} \
+          SMON_ALARMS {Set_Alarms_On} \
+          SMON_ENABLE_TEMP_AVERAGING {0} \
+          SMON_INTERFACE_TO_USE {I2C} \
+          SMON_MEAS36 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCCAUX} {SUPPLY_NUM 0}} \
+          SMON_MEAS37 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCCAUX_PMC} {SUPPLY_NUM 1}} \
+          SMON_MEAS58 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCC_PMC} {SUPPLY_NUM 2}} \
+          SMON_MEAS59 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCC_PSFP} {SUPPLY_NUM 3}} \
+          SMON_MEAS60 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCC_PSLP} {SUPPLY_NUM 4}} \
+          SMON_MEAS62 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 2.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {2 V unipolar}} {NAME VCC_SOC} {SUPPLY_NUM 5}} \
+          SMON_MEAS63 {{ALARM_ENABLE 1} {ALARM_LOWER 0.00} {ALARM_UPPER 1.00} {AVERAGE_EN 0} {ENABLE 1} {MODE {1 V unipolar}} {NAME VP_VN} {SUPPLY_NUM 6}} \
+          SMON_PMBUS_ADDRESS {0x18} \
+          SMON_TEMP_AVERAGING_SAMPLES {0} \
+        } \
+     ] $versal_cips_0
+    } else {
+      puts "ERROR: Unsupported PCIe configuration: Gen$cnfg(pcie_gen). Supported configurations for VPK120 are Gen4x8 and Gen5x8."
+      exit 1
+    }
   } else {
     puts "ERROR: Unsupported FPGA part: $cnfg(fdev)"
     exit 1
@@ -471,7 +670,7 @@ proc cr_bd_design_static { parentCell } {
   set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
   set_property CONFIG.NUM_SI {1} $smartconnect_0
   set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1} __view__ {functional {S00_Entry {SUPPORTS_WRAP 1 SUPPORTS_NARROW_BURST 1}}}} $smartconnect_0
-  
+
   set smartconnect_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_1 ]
   set_property CONFIG.NUM_SI {1} $smartconnect_1
   set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1} __view__ {functional {S00_Entry {SUPPORTS_WRAP 1 SUPPORTS_NARROW_BURST 1}}}} $smartconnect_1
@@ -490,10 +689,10 @@ proc cr_bd_design_static { parentCell } {
 ########################################################################################################
 # Create interface connections
 ########################################################################################################
-  if {$cnfg(pcie_gen) eq 5} {
+  if {$cnfg(pcie_gen) eq 5 || $cnfg(fdev) eq "vpk120"} {
     # QDMA
     connect_bd_intf_net [get_bd_intf_ports pcie_clk] [get_bd_intf_pins versal_cips_0/gt_refclk1]
-    connect_bd_intf_net [get_bd_intf_ports pcie_gt] [get_bd_intf_pins versal_cips_0/PCIE1_GT] 
+    connect_bd_intf_net [get_bd_intf_ports pcie_gt] [get_bd_intf_pins versal_cips_0/PCIE1_GT]
 
     # Descriptor status
     connect_bd_intf_net [get_bd_intf_ports c2h_status] [get_bd_intf_pins versal_cips_0/dma1_axis_c2h_status]
@@ -512,11 +711,11 @@ proc cr_bd_design_static { parentCell } {
 
     # Interrupts
     connect_bd_intf_net [get_bd_intf_ports usr_irq] [get_bd_intf_pins versal_cips_0/dma1_usr_irq]
-  
+
   } elseif {$cnfg(pcie_gen) eq 4} {
     # QDMA
     connect_bd_intf_net [get_bd_intf_ports pcie_clk] [get_bd_intf_pins versal_cips_0/gt_refclk0]
-    connect_bd_intf_net [get_bd_intf_ports pcie_gt] [get_bd_intf_pins versal_cips_0/PCIE0_GT] 
+    connect_bd_intf_net [get_bd_intf_ports pcie_gt] [get_bd_intf_pins versal_cips_0/PCIE0_GT]
 
     # Descriptor status
     connect_bd_intf_net [get_bd_intf_ports c2h_status] [get_bd_intf_pins versal_cips_0/dma0_axis_c2h_status]
@@ -539,7 +738,7 @@ proc cr_bd_design_static { parentCell } {
     puts "ERROR: Unsupported PCIe configuration: Gen$cnfg(pcie_gen). Supported configurations for V80 are Gen4x16 and Gen5x8."
     exit 1
   }
-  
+
   # NoC
   connect_bd_intf_net [get_bd_intf_pins axi_noc_0/S00_AXI] [get_bd_intf_pins versal_cips_0/CPM_PCIE_NOC_0]
   connect_bd_intf_net [get_bd_intf_pins axi_noc_0/S01_AXI] [get_bd_intf_pins versal_cips_0/CPM_PCIE_NOC_1]
@@ -562,7 +761,7 @@ proc cr_bd_design_static { parentCell } {
 # Create port connections
 ########################################################################################################
 
-  if {$cnfg(pcie_gen) eq 5} {
+  if {$cnfg(pcie_gen) eq 5 || $cnfg(fdev) eq "vpk120"} {
     # QDMA unused ready signals are tied off to 1
     connect_bd_net [get_bd_pins const_1/dout] [get_bd_pins versal_cips_0/dma1_st_rx_msg_tready]
     connect_bd_net [get_bd_pins const_1/dout] [get_bd_pins versal_cips_0/dma1_tm_dsc_sts_rdy]
@@ -571,7 +770,7 @@ proc cr_bd_design_static { parentCell } {
 
     # QDMA resetn is tied off to 1 (for now, keeping it consistent with rest of Coyote)
     connect_bd_net [get_bd_pins const_1/dout] [get_bd_pins versal_cips_0/dma1_intrfc_resetn]
-  
+
     # Tie off all MM descriptors other than host-to-card channel 0 for PR
     connect_bd_net  [get_bd_pins const_0/dout] [get_bd_pins versal_cips_0/dma1_h2c_byp_in_mm_1_valid]
     connect_bd_net  [get_bd_pins const_0/dout] [get_bd_pins versal_cips_0/dma1_c2h_byp_in_mm_1_valid]
@@ -594,7 +793,7 @@ proc cr_bd_design_static { parentCell } {
     puts "ERROR: Unsupported PCIe configuration: Gen$cnfg(pcie_gen). Supported configurations for V80 are Gen4x16 and Gen5x8."
     exit 1
   }
-  
+
   # QDMA CPM IRQ interfaces should be tied off to 0 (reserved for future use)
   connect_bd_net [get_bd_pins const_0/dout] [get_bd_pins versal_cips_0/cpm_irq0]
   connect_bd_net [get_bd_pins const_0/dout] [get_bd_pins versal_cips_0/cpm_irq1]
@@ -604,17 +803,17 @@ proc cr_bd_design_static { parentCell } {
   connect_bd_net [get_bd_pins versal_cips_0/cpm_pcie_noc_axi1_clk] [get_bd_pins axi_noc_0/aclk1]
   connect_bd_net [get_bd_pins versal_cips_0/pmc_axi_noc_axi0_clk] [get_bd_pins axi_noc_0/aclk2]
   connect_bd_net [get_bd_pins versal_cips_0/noc_pmc_axi_axi0_clk] [get_bd_pins axi_noc_0/aclk4]
-  
-  # Main shell clock
-  connect_bd_net [get_bd_pins versal_cips_0/pl0_ref_clk] [get_bd_pins clk_wiz_0/clk_in1] 
 
-  connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_ports xclk] 
-  connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins axi_noc_0/aclk3] 
+  # Main shell clock
+  connect_bd_net [get_bd_pins versal_cips_0/pl0_ref_clk] [get_bd_pins clk_wiz_0/clk_in1]
+
+  connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_ports xclk]
+  connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins axi_noc_0/aclk3]
   connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins axi_reg_slice_0/aclk]
   connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins axi_reg_slice_1/aclk]
   connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins smartconnect_0/aclk]
   connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins smartconnect_1/aclk]
-  if {$cnfg(pcie_gen) eq 5} {
+  if {$cnfg(pcie_gen) eq 5 || $cnfg(fdev) eq "vpk120"} {
     connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins versal_cips_0/dma1_intrfc_clk]
   } elseif {$cnfg(pcie_gen) eq 4} {
     connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins versal_cips_0/dma0_intrfc_clk]
@@ -627,10 +826,10 @@ proc cr_bd_design_static { parentCell } {
   connect_bd_net [get_bd_ports sresetn] [get_bd_pins proc_sys_reset_s/peripheral_aresetn]
   connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins proc_sys_reset_s/slowest_sync_clk]
 
-  if {$cnfg(pcie_gen) eq 5} {
+  if {$cnfg(pcie_gen) eq 5 || $cnfg(fdev) eq "vpk120"} {
     # System reset
-    connect_bd_net [get_bd_pins versal_cips_0/dma1_axi_aresetn] [get_bd_pins proc_sys_reset_s/ext_reset_in] 
-    
+    connect_bd_net [get_bd_pins versal_cips_0/dma1_axi_aresetn] [get_bd_pins proc_sys_reset_s/ext_reset_in]
+
     # SmartConnect and register slice reset
     connect_bd_net [get_bd_pins versal_cips_0/dma1_axi_aresetn] [get_bd_pins smartconnect_0/aresetn]
     connect_bd_net [get_bd_pins versal_cips_0/dma1_axi_aresetn] [get_bd_pins smartconnect_1/aresetn]
@@ -638,8 +837,8 @@ proc cr_bd_design_static { parentCell } {
     connect_bd_net [get_bd_pins versal_cips_0/dma1_axi_aresetn] [get_bd_pins axi_reg_slice_1/aresetn]
   } elseif {$cnfg(pcie_gen) eq 4} {
     # System reset
-    connect_bd_net [get_bd_pins versal_cips_0/dma0_axi_aresetn] [get_bd_pins proc_sys_reset_s/ext_reset_in] 
-    
+    connect_bd_net [get_bd_pins versal_cips_0/dma0_axi_aresetn] [get_bd_pins proc_sys_reset_s/ext_reset_in]
+
     # SmartConnect and register slice reset
     connect_bd_net [get_bd_pins versal_cips_0/dma0_axi_aresetn] [get_bd_pins smartconnect_0/aresetn]
     connect_bd_net [get_bd_pins versal_cips_0/dma0_axi_aresetn] [get_bd_pins smartconnect_1/aresetn]
@@ -664,7 +863,7 @@ proc cr_bd_design_static { parentCell } {
   # Shell & static config
   assign_bd_address -offset 0x020100000000 -range 1M -target_address_space [get_bd_addr_spaces versal_cips_0/CPM_PCIE_NOC_0] [get_bd_addr_segs axi_cnfg/Reg] -force
   assign_bd_address -offset 0x020800000000 -range 256M -target_address_space [get_bd_addr_spaces versal_cips_0/CPM_PCIE_NOC_0] [get_bd_addr_segs axi_main/Reg] -force
-  
+
   # PR control (SBI CSR) --- currently unused
   # assign_bd_address -offset 0x000101220000 -range 64K -target_address_space [get_bd_addr_spaces versal_cips_0/CPM_PCIE_NOC_1] [get_bd_addr_segs versal_cips_0/NOC_PMC_AXI_0/pspmc_0_psv_pmc_slave_boot] -force
 
@@ -673,13 +872,13 @@ proc cr_bd_design_static { parentCell } {
 
   # PMC_NOC_AXI_0 for configuring the Debug Hub IP
   assign_bd_address -offset 0x020240000000 -range 2M -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_debug_hub/Reg] -force
-  
+
   # Restore current instance
   current_bd_instance $oldCurInst
 
   validate_bd_design
   save_bd_design
-  close_bd_design $design_name 
+  close_bd_design $design_name
 
   return 0
 }
