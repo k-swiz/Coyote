@@ -1,10 +1,10 @@
 ######################################################################################
 # This file is part of Coyote <https://github.com/fpgasystems/Coyote>
-# 
+#
 # MIT Licence
 # Copyright (c) 2026, Systems Group, ETH Zurich
 # All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -42,8 +42,10 @@ if { [string compare $current_vivado_version $scripts_vivado_version] < 0 } {
 # Select DCMAC IP version based on Vivado version
 if { [string compare $current_vivado_version 2025.2] < 0 } {
     set dcmac_vlnv "xilinx.com:ip:dcmac:3.0"
+} elseif { [string compare $current_vivado_version 2026.1] < 0 } {
+   set dcmac_vlnv "xilinx.com:ip:dcmac:3.1"
 } else {
-    set dcmac_vlnv "xilinx.com:ip:dcmac:3.1"
+    set dcmac_vlnv "xilinx.com:ip:dcmac:3.2"
 }
 
 ##################################################################
@@ -86,7 +88,7 @@ xilinx.com:ip:xpm_cdc_gen:1.0\
 ##################################################################
 set bCheckModules 1
 if { $bCheckModules == 1 } {
-   set list_check_mods "\ 
+   set list_check_mods "\
 dcmac200g_ctl_port\
 axis_seg_to_unseg_converter\
 axis_unseg_to_seg_converter\
@@ -124,7 +126,7 @@ if { $bCheckIPsPassed != 1 } {
 
 # Hierarchical cell: bd_clock_reset_ctrl
 proc create_hier_cell_bd_clock_reset_ctrl { parentCell nameHier } {
-
+  upvar #0 cfg cnfg
   variable script_folder
 
   if { $parentCell eq "" || $nameHier eq "" } {
@@ -191,6 +193,47 @@ proc create_hier_cell_bd_clock_reset_ctrl { parentCell nameHier } {
 
 
   # Create instance: clk_wizard_dcmac, and set properties
+#   if {$cnfg(fdev) eq "v80"} {
+#    set clk_wizard_dcmac [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wizard:1.0 clk_wizard_dcmac ]
+#    set_property -dict [list \
+#       CONFIG.CLKOUT_DRIVES {BUFG,BUFG,BUFG,BUFG,BUFG,BUFG,BUFG} \
+#       CONFIG.CLKOUT_DYN_PS {None,None,None,None,None,None,None} \
+#       CONFIG.CLKOUT_GROUPING {Auto,Auto,Auto,Auto,Auto,Auto,Auto} \
+#       CONFIG.CLKOUT_MATCHED_ROUTING {false,false,false,false,false,false,false} \
+#       CONFIG.CLKOUT_PORT {clk_out1,clk_out2,clk_out3,clk_out4,clk_out5,clk_out6,clk_out7} \
+#       CONFIG.CLKOUT_REQUESTED_DUTY_CYCLE {50.000,50.000,50.000,50.000,50.000,50.000,50.000} \
+#       CONFIG.CLKOUT_REQUESTED_OUT_FREQUENCY {782,390.625,100,100.000,100.000,100.000,100.000} \
+#       CONFIG.CLKOUT_REQUESTED_PHASE {0.000,0.000,0.000,0.000,0.000,0.000,0.000} \
+#       CONFIG.CLKOUT_USED {true,true,true,false,false,false,false} \
+#       CONFIG.OVERRIDE_PRIMITIVE {false} \
+#       CONFIG.PRIM_IN_FREQ {322.265625} \
+#       CONFIG.PRIM_SOURCE {Global_buffer} \
+#       CONFIG.USE_LOCKED {false} \
+#    ] $clk_wizard_dcmac
+
+#   } elseif {$cnfg(fdev) eq "vpk120"} {
+#    set clk_wizard_dcmac [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wizard:1.0 clk_wizard_dcmac ]
+#    set_property -dict [list \
+#       CONFIG.CLKOUT_DRIVES {BUFG,BUFG,BUFG,BUFG,BUFG,BUFG,BUFG} \
+#       CONFIG.CLKOUT_DYN_PS {None,None,None,None,None,None,None} \
+#       CONFIG.CLKOUT_GROUPING {Auto,Auto,Auto,Auto,Auto,Auto,Auto} \
+#       CONFIG.CLKOUT_MATCHED_ROUTING {false,false,false,false,false,false,false} \
+#       CONFIG.CLKOUT_PORT {clk_out1,clk_out2,clk_out3,clk_out4,clk_out5,clk_out6,clk_out7} \
+#       CONFIG.CLKOUT_REQUESTED_DUTY_CYCLE {50.000,50.000,50.000,50.000,50.000,50.000,50.000} \
+#       CONFIG.CLKOUT_REQUESTED_OUT_FREQUENCY {782,390.625,100,100.000,100.000,100.000,100.000} \
+#       CONFIG.CLKOUT_REQUESTED_PHASE {0.000,0.000,0.000,0.000,0.000,0.000,0.000} \
+#       CONFIG.CLKOUT_USED {true,true,true,false,false,false,false} \
+#       CONFIG.OVERRIDE_PRIMITIVE {false} \
+#       CONFIG.PRIM_IN_FREQ {156.25} \
+#       CONFIG.PRIM_SOURCE {Global_buffer} \
+#       CONFIG.USE_LOCKED {false} \
+#    ] $clk_wizard_dcmac
+#   } else {
+#     puts "ERROR: Unsupported FPGA part: $cnfg(fdev)"
+#     exit 1
+#   }
+
+  # Create instance: clk_wizard_dcmac, and set properties
   set clk_wizard_dcmac [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wizard:1.0 clk_wizard_dcmac ]
   set_property -dict [list \
     CONFIG.CLKOUT_DRIVES {BUFG,BUFG,BUFG,BUFG,BUFG,BUFG,BUFG} \
@@ -203,7 +246,7 @@ proc create_hier_cell_bd_clock_reset_ctrl { parentCell nameHier } {
     CONFIG.CLKOUT_REQUESTED_PHASE {0.000,0.000,0.000,0.000,0.000,0.000,0.000} \
     CONFIG.CLKOUT_USED {true,true,true,false,false,false,false} \
     CONFIG.OVERRIDE_PRIMITIVE {false} \
-    CONFIG.PRIM_IN_FREQ {322.265625} \
+    CONFIG.PRIM_IN_FREQ {156.25} \
     CONFIG.PRIM_SOURCE {Global_buffer} \
     CONFIG.USE_LOCKED {false} \
   ] $clk_wizard_dcmac
@@ -219,7 +262,7 @@ proc create_hier_cell_bd_clock_reset_ctrl { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create interface connections
   connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins diff_buff/CLK_IN_D1] [get_bd_intf_pins gt_clk]
 
@@ -444,6 +487,7 @@ proc create_hier_cell_datapath_tx { parentCell nameHier } {
 
 # Hierarchical cell: dcmac_wrapper
 proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
+  upvar #0 cfg cnfg
 
   variable script_folder
   global dcmac_vlnv
@@ -509,12 +553,47 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
   create_bd_pin -dir I -type clk ts_axil_clk
 
   # Create instance: dcmac, and set properties
+#   if {$cnfg(fdev) eq "v80"} {
+#     set dcmac [ create_bd_cell -type ip -vlnv $dcmac_vlnv dcmac ]
+#     set_property -dict [list \
+#       CONFIG.DCMAC_LOCATION_C0 {DCMAC_X1Y1} \
+#       CONFIG.GT_REF_CLK_FREQ_C0 {322.265625} \
+#       CONFIG.IS_GT_WIZ_OLD {0} \
+#       CONFIG.MAC_PORT0_CONFIG_C0 {200GAUI-4} \
+#       CONFIG.MAC_PORT0_RX_STRIP_C0 {1} \
+#       CONFIG.MAC_PORT1_RX_STRIP_C0 {1} \
+#       CONFIG.MAC_PORT2_ENABLE_C0 {0} \
+#       CONFIG.MAC_PORT3_ENABLE_C0 {0} \
+#       CONFIG.MAC_PORT4_ENABLE_C0 {0} \
+#       CONFIG.MAC_PORT5_ENABLE_C0 {0} \
+#       CONFIG.USE_AXIS_ALMOSTFULL_INDICATION {0} \
+#     ] $dcmac
+#   } elseif {$cnfg(fdev) eq "vpk120"} {
+#     set dcmac [ create_bd_cell -type ip -vlnv $dcmac_vlnv dcmac ]
+#     set_property -dict [list \
+#       CONFIG.DCMAC_LOCATION_C0 {DCMAC_X0Y0} \
+#       CONFIG.GT_REF_CLK_FREQ_C0 {156.25} \
+#       CONFIG.IS_GT_WIZ_OLD {0} \
+#       CONFIG.MAC_PORT0_CONFIG_C0 {100GAUI-4} \
+#       CONFIG.MAC_PORT0_RX_STRIP_C0 {1} \
+#       CONFIG.MAC_PORT1_RX_STRIP_C0 {1} \
+#       CONFIG.MAC_PORT2_ENABLE_C0 {0} \
+#       CONFIG.MAC_PORT3_ENABLE_C0 {0} \
+#       CONFIG.MAC_PORT4_ENABLE_C0 {0} \
+#       CONFIG.MAC_PORT5_ENABLE_C0 {0} \
+#       CONFIG.USE_AXIS_ALMOSTFULL_INDICATION {0} \
+#     ] $dcmac
+#   } else {
+#     puts "ERROR: Unsupported FPGA part: $cnfg(fdev)"
+#     exit 1
+#   }
+
   set dcmac [ create_bd_cell -type ip -vlnv $dcmac_vlnv dcmac ]
   set_property -dict [list \
-    CONFIG.DCMAC_LOCATION_C0 {DCMAC_X1Y1} \
-    CONFIG.GT_REF_CLK_FREQ_C0 {322.265625} \
+    CONFIG.DCMAC_LOCATION_C0 {DCMAC_X0Y0} \
+    CONFIG.GT_REF_CLK_FREQ_C0 {156.25} \
     CONFIG.IS_GT_WIZ_OLD {0} \
-    CONFIG.MAC_PORT0_CONFIG_C0 {200GAUI-4} \
+    CONFIG.MAC_PORT0_CONFIG_C0 {100GAUI-4} \
     CONFIG.MAC_PORT0_RX_STRIP_C0 {1} \
     CONFIG.MAC_PORT1_RX_STRIP_C0 {1} \
     CONFIG.MAC_PORT2_ENABLE_C0 {0} \
@@ -535,7 +614,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: seg_to_axis, and set properties
   set block_name axis_seg_to_unseg_converter
   set block_cell_name seg_to_axis
@@ -546,9 +625,9 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   set_property -dict [ list \
-   CONFIG.FREQ_HZ {390998840} \
+   CONFIG.FREQ_HZ {391000600} \
  ] [get_bd_intf_pins /dcmac_wrapper/seg_to_axis/m_axis0_pkt_out]
 
   # Create instance: const_0, and set properties
@@ -566,7 +645,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: alt_serdes_clk_tx, and set properties
   set block_name clk_to_alt_serdes_clk
   set block_cell_name alt_serdes_clk_tx
@@ -577,7 +656,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: serdes_clk_tx, and set properties
   set block_name clk_to_serdes_clk
   set block_cell_name serdes_clk_tx
@@ -588,7 +667,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: flexif_clk_rx, and set properties
   set block_name clk_to_flexif_clk
   set block_cell_name flexif_clk_rx
@@ -599,7 +678,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: alt_serdes_clk_rx, and set properties
   set block_name clk_to_alt_serdes_clk
   set block_cell_name alt_serdes_clk_rx
@@ -610,7 +689,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: ts_clk, and set properties
   set block_name clk_to_ts_clk
   set block_cell_name ts_clk
@@ -621,7 +700,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: serdes_clk_rx, and set properties
   set block_name clk_to_serdes_clk
   set block_cell_name serdes_clk_rx
@@ -632,7 +711,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: axis_to_seg, and set properties
   set block_name axis_to_dcmac_seg_wrapper
   set block_cell_name axis_to_seg
@@ -643,7 +722,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
-  
+
   # Create instance: const_1, and set properties
   set const_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 const_1 ]
 
@@ -1163,16 +1242,21 @@ proc cr_bd_dcmac { parentCell } {
 
     set m_axis_rx [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 m_axis_rx ]
 
+   #  set gt_clk [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 gt_clk ]
+   #  set_property -dict [ list \
+   #      CONFIG.FREQ_HZ {322265625} \
+   #  ] $gt_clk
+
     set gt_clk [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 gt_clk ]
     set_property -dict [ list \
-        CONFIG.FREQ_HZ {322265625} \
+        CONFIG.FREQ_HZ {156250000} \
     ] $gt_clk
 
     set gt [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gt_rtl:1.0 gt ]
 
     # Create ports
     set aresetn [ create_bd_port -dir I -type rst aresetn ]
-    
+
     set aclk [ create_bd_port -dir I -type clk aclk ]
     set cmd "set_property -dict \[ list \
       CONFIG.FREQ_HZ $cnfg(nclk_f)000000 \
@@ -1193,19 +1277,19 @@ proc cr_bd_dcmac { parentCell } {
 
     connect_bd_intf_net [get_bd_intf_ports m_axis_rx] [get_bd_intf_pins datapath_rx/m_axis_rx]
     connect_bd_intf_net [get_bd_intf_pins dcmac_wrapper/m_axis_rx] [get_bd_intf_pins datapath_rx/s_axis_rx]
-    
+
     connect_bd_intf_net [get_bd_intf_ports s_axis_tx] [get_bd_intf_pins datapath_tx/s_axis_tx]
     connect_bd_intf_net [get_bd_intf_pins dcmac_wrapper/s_axis_tx] [get_bd_intf_pins datapath_tx/m_axis_tx]
 
     # Create port connections
     connect_bd_net [get_bd_ports aclk] [get_bd_pins datapath_tx/aclk] [get_bd_pins datapath_rx/aclk]
     connect_bd_net [get_bd_ports aresetn] [get_bd_pins datapath_tx/aresetn] [get_bd_pins bd_clock_reset_ctrl/aresetn]
-    
+
     connect_bd_net [get_bd_pins dcmac_wrapper/tx_data_0] [get_bd_pins gt_wrapper/tx_data_0]
     connect_bd_net [get_bd_pins dcmac_wrapper/tx_data_1] [get_bd_pins gt_wrapper/tx_data_1]
     connect_bd_net [get_bd_pins dcmac_wrapper/tx_data_2] [get_bd_pins gt_wrapper/tx_data_2]
     connect_bd_net [get_bd_pins dcmac_wrapper/tx_data_3] [get_bd_pins gt_wrapper/tx_data_3]
-    
+
     connect_bd_net [get_bd_pins gt_wrapper/rx_data_0] [get_bd_pins dcmac_wrapper/rx_data_0]
     connect_bd_net [get_bd_pins gt_wrapper/rx_data_1] [get_bd_pins dcmac_wrapper/rx_data_1]
     connect_bd_net [get_bd_pins gt_wrapper/rx_data_2] [get_bd_pins dcmac_wrapper/rx_data_2]
@@ -1215,7 +1299,7 @@ proc cr_bd_dcmac { parentCell } {
     connect_bd_net [get_bd_pins bd_clock_reset_ctrl/gt_ref_clk] [get_bd_pins gt_wrapper/gt_ref_clk]
     connect_bd_net [get_bd_pins gt_wrapper/gt_rst_rx_done] [get_bd_pins bd_clock_reset_ctrl/gt_reset_done_rx]
     connect_bd_net [get_bd_pins gt_wrapper/gt_rst_tx_done] [get_bd_pins bd_clock_reset_ctrl/gt_reset_done_tx]
-    
+
     connect_bd_net [get_bd_pins bd_clock_reset_ctrl/dcmac_axis_clk] \
     [get_bd_pins dcmac_wrapper/axis_clk] \
     [get_bd_pins datapath_tx/dclk] \
@@ -1247,7 +1331,7 @@ proc cr_bd_dcmac { parentCell } {
 
     validate_bd_design
     save_bd_design
-    close_bd_design $design_name 
+    close_bd_design $design_name
 
     return 0
 }
