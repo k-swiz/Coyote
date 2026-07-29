@@ -1,10 +1,10 @@
 ######################################################################################
 # This file is part of the Coyote <https://github.com/fpgasystems/Coyote>
-# 
+#
 # MIT Licence
 # Copyright (c) 2025, Systems Group, ETH Zurich
 # All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -28,7 +28,7 @@
 # Additionally, creates and configures all the necessary IPs for memory, networking etc.
 
 if {[catch {
-    
+
 ########################################################################################################
 
 # Config & environment
@@ -61,7 +61,7 @@ file mkdir "$log_dir/shell"
 ########################################################################################################
 # SET PROJECT PROPERTIES
 ########################################################################################################
-#set_property "board_part" $board_part                      $proj
+set_property "board_part" $board_part                       $proj
 set_property "default_lib" "xil_defaultlib"                 $proj
 set_property "ip_cache_permissions" "read write"            $proj
 set_property "ip_output_repo" "$proj_dir/$project.cache/ip" $proj
@@ -147,7 +147,7 @@ set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files design_ctrl.bd ]
 # However, the SmartConnect IP must be instantiated in a block diagram, as done below.
 if {$cfg(fpga_arch) eq "versal"} {
     source "$hw_dir/bd/versal/cr_xbar.tcl" -notrace
-    for {set i 0}  {$i < $cfg(n_reg)} {incr i} {    
+    for {set i 0}  {$i < $cfg(n_reg)} {incr i} {
         cr_bd_dyn_xbar $i
         set cmd "set_property SYNTH_CHECKPOINT_MODE \"Hierarchical\" \[ get_files dyn_crossbar_$i.bd \]"
         eval $cmd
@@ -162,16 +162,16 @@ if {$cfg(en_dcard) eq 1} {
 
 if {$cfg(en_hcard) eq 1} {
     if {$cfg(hbm_split) eq 1} {
-      source "$hw_dir/bd/$cfg(fpga_arch)/cr_hbm_split.tcl" -notrace 
+      source "$hw_dir/bd/$cfg(fpga_arch)/cr_hbm_split.tcl" -notrace
     } else {
-      source "$hw_dir/bd/$cfg(fpga_arch)/cr_hbm.tcl" -notrace 
+      source "$hw_dir/bd/$cfg(fpga_arch)/cr_hbm.tcl" -notrace
     }
 
     # The HBM NoC controller accepts AXI inputs with DATA_WIDTH <= 256
     # Therefore, before the HBM controller, add a SmartConnect that does
     # clock domain crossing and data width conversion. On UltraScale+ devices,
     # a similar functionality exists, but as part of the HBM BD. However, on Versal,
-    # since both the NoC and the SmartConnect IP need address assignment, 
+    # since both the NoC and the SmartConnect IP need address assignment,
     # it's best to keep them separate.
     if {$cfg(fpga_arch) eq "versal"} {
         cr_bd_hbm_cc_dwc ""
@@ -179,6 +179,24 @@ if {$cfg(en_hcard) eq 1} {
 
     cr_bd_design_hbm ""
     set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files design_hbm.bd ]
+}
+
+if {$cfg(en_lcard) eq 1} {
+    source "$hw_dir/bd/$cfg(fpga_arch)/cr_lpddr.tcl" -notrace
+
+
+    # The HBM NoC controller accepts AXI inputs with DATA_WIDTH <= 256
+    # Therefore, before the HBM controller, add a SmartConnect that does
+    # clock domain crossing and data width conversion. On UltraScale+ devices,
+    # a similar functionality exists, but as part of the HBM BD. However, on Versal,
+    # since both the NoC and the SmartConnect IP need address assignment,
+    # it's best to keep them separate.
+    if {$cfg(fpga_arch) eq "versal"} {
+        cr_bd_lpddr_cc_dwc ""
+    }
+
+    cr_bd_design_lpddr ""
+    set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files design_lpddr.bd ]
 }
 
 # Versal devices rely on the DCMAC for networking, which is instantiated in a BD

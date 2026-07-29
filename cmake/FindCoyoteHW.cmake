@@ -444,13 +444,14 @@ macro(validation_checks_hw)
             # Platform details
             set(FPGA_ARCH "versal")
             set(FPGA_PART xcvp1202-vsva2785-2MP-e-S CACHE STRING "FPGA Part" FORCE)
+            set(BOARD_PART xilinx.com:vpk120:part0:1.2 CACHE STRING "Board Part" FORCE)
 
             # TODO (Versal): The VPK120 uses LPDDR memory instead of HBM or older SDRAM configuration. LPDDR_DEV set below but effectively disables memory interfaces for now.
             set(DDR_SIZE 0)
             set(N_DDR_CHAN 0)
 
             # HBM configuration
-            set(HCLK_F 400)
+            set(HCLK_F 250)
             set(HBM_SIZE 35)
 
             # Striping for unified HBM implementation
@@ -623,18 +624,30 @@ macro(validation_checks_hw)
                 if(N_DDR_CHAN EQUAL 0)
                     set(N_DDR_CHAN 1)
                 endif()
+                set(EN_LCARD 0)
             elseif(AV_HBM)
                 set(EN_DCARD 0)
                 set(EN_HCARD 1)
+                set(EN_LCARD 0)
+            elseif(AV_LPDDR)
+                set(EN_LCARD 1)
+                set(EN_DCARD 0)
+                set(EN_HCARD 0)
             endif()
         else()
             if(EN_MEM)
                 if(AV_DDR)
                     set(EN_DCARD 1)
                     set(EN_HCARD 0)
+                    set(EN_LCARD 0)
                 elseif(AV_HBM)
                     set(EN_DCARD 0)
                     set(EN_HCARD 1)
+                    set(EN_LCARD 0)
+                elseif(AV_LPDDR)
+                   set(EN_DCARD 0)
+                   set(EN_HCARD 0)
+                   set(EN_LCARD 1)
                 endif()
             endif()
         endif()
@@ -682,7 +695,7 @@ macro(validation_checks_hw)
         ##
 
         # Total AXI memory channels
-        if(EN_HCARD OR EN_DCARD)
+        if(EN_HCARD OR EN_DCARD OR EN_LCARD)
             set(EN_CARD 1)
         else()
             set(EN_CARD 0)
@@ -739,7 +752,7 @@ macro(validation_checks_hw)
         endif()
 
         # To reduce PC collisions, striping is enabled on Versal devices with 'unified' HBM implementation
-        if(FPGA_ARCH STREQUAL "versal" AND EN_HCARD AND HBM_IMPL STREQUAL "unified") #TODO: Remove 'EN_HCARD'?
+        if(FPGA_ARCH STREQUAL "versal" AND EN_HCARD AND HBM_IMPL STREQUAL "unified")
             set(EN_MEM_STRIPE 1)
         endif()
 

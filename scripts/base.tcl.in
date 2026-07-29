@@ -1,10 +1,10 @@
 ######################################################################################
 # This file is part of the Coyote <https://github.com/fpgasystems/Coyote>
-# 
+#
 # MIT Licence
 # Copyright (c) 2025, Systems Group, ETH Zurich
 # All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -29,6 +29,7 @@
 ########################################################################################################
 set project         "${CMAKE_PROJECT_NAME}"
 set part            "${FPGA_PART}"
+set board_part      "${BOARD_PART}"
 
 ########################################################################################################
 # SOURCE FILES & PATHS
@@ -38,7 +39,7 @@ set build_dir       "${CMAKE_BINARY_DIR}"
 set scripts_dir     "$root_dir/scripts"
 set hw_dir          "$root_dir/hw"
 set ip_dir          "$root_dir/hw/ip"
-set iprepo_dir      "$build_dir/iprepo" 
+set iprepo_dir      "$build_dir/iprepo"
 set dcp_dir         "$build_dir/checkpoints"
 set rprt_dir        "$build_dir/reports"
 set log_dir         "$build_dir/logs"
@@ -91,6 +92,7 @@ set cfg(stripe_frag_size)       ${STRIPE_FRAG_SIZE}
 set cfg(n_tcp_chan)             ${N_TCP_CHAN}
 set cfg(en_dcard)               ${EN_DCARD}
 set cfg(en_hcard)               ${EN_HCARD}
+set cfg(en_lcard)               ${EN_LCARD}
 set cfg(en_card)                ${EN_CARD}
 set cfg(en_pr)                  ${EN_PR}
 set cfg(n_config)               ${N_CONFIG}
@@ -99,13 +101,13 @@ set cfg(n_outs)                 ${N_OUTSTANDING}
 set cfg(en_avx)                 ${EN_AVX}
 set cfg(en_wb)                  ${EN_WB}
 set cfg(en_rdma)                ${EN_RDMA}
-set cfg(en_tcp)                 ${EN_TCP} 
+set cfg(en_tcp)                 ${EN_TCP}
 set cfg(en_host_networking)     ${EN_HOST_NETWORKING}
 set cfg(en_sniffer)             ${EN_SNIFFER}
 set cfg(sniffer_vfpga_id)       ${SNIFFER_VFPGA_ID}
 set cfg(en_net_0)               ${EN_NET_0}
 set cfg(en_net_1)               ${EN_NET_1}
-set cfg(en_net)                 ${EN_NET}   
+set cfg(en_net)                 ${EN_NET}
 set cfg(qsfp)                   ${QSFP}
 set cfg(pmtu)                   ${PMTU_BYTES}
 set cfg(cores)                  ${COMP_CORES}
@@ -125,7 +127,7 @@ set cfg(pol_inv)                ${POL_INV}
 set cfg(ddr_0)                  ${DDR_0}
 set cfg(ddr_1)                  ${DDR_1}
 set cfg(ddr_2)                  ${DDR_2}
-set cfg(ddr_3)                  ${DDR_3} 
+set cfg(ddr_3)                  ${DDR_3}
 set cfg(strm_chan)              ${STRM_CHAN}
 set cfg(card_chan)              ${CARD_CHAN}
 set cfg(en_xch_0)               ${EN_XCH_0}

@@ -1,10 +1,10 @@
 ######################################################################################
 # This file is part of the Coyote <https://github.com/fpgasystems/Coyote>
-# 
+#
 # MIT Licence
 # Copyright (c) 2025, Systems Group, ETH Zurich
 # All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -28,7 +28,7 @@
 # Additionally, creates and configures all the necessary IPs for host DMA.
 
 if {[catch {
-    
+
 ########################################################################################################
 
 # Config & environment
@@ -60,7 +60,7 @@ file mkdir "$log_dir/static"
 ########################################################################################################
 # SET PROJECT PROPERTIES
 ########################################################################################################
-#set_property "board_part" $board_part                      $proj
+set_property "board_part" $board_part                       $proj
 set_property "default_lib" "xil_defaultlib"                 $proj
 set_property "ip_cache_permissions" "read write"            $proj
 set_property "ip_output_repo" "$proj_dir/$project.cache/ip" $proj

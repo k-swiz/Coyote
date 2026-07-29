@@ -1,10 +1,10 @@
 ######################################################################################
 # This file is part of the Coyote <https://github.com/fpgasystems/Coyote>
-# 
+#
 # MIT Licence
 # Copyright (c) 2025, Systems Group, ETH Zurich
 # All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -28,7 +28,7 @@
 # Additionally, it packages user kernels as IPs that can be used later during the synthesis
 
 if {[catch {
-    
+
 ########################################################################################################
 
 # Config & env
@@ -62,7 +62,7 @@ for {set i 0}  {$i < $cfg(n_config)} {incr i} {
         ########################################################################################################
         # SET PROJECT PROPERTIES
         ########################################################################################################
-        #set_property "board_part" $board_part                      $proj
+        set_property "board_part" $board_part                       $proj
         set_property "default_lib" "xil_defaultlib"                 $proj
         set_property "ip_cache_permissions" "read write"            $proj
         set_property "ip_output_repo" "$proj_dir/$project.cache/ip" $proj
@@ -100,7 +100,7 @@ for {set i 0}  {$i < $cfg(n_config)} {incr i} {
         set_property used_in_implementation false [get_files -of_objects [get_filesets constrs_1]]
 
         # On Versal architectures, a CIPS instance is required for correctly setting up the DebugHub required to interact with ILAs
-        # The DebugHub insertion typically happens during opt_design, at which point the static, shell and user layers are already linked 
+        # The DebugHub insertion typically happens during opt_design, at which point the static, shell and user layers are already linked
         # and a CIPS is available. However, in some cases, Vivado will try to insert the DebugHub during synthesis, leading to a failure.
         # Therefore, synthesise the user apps in OOC mode, leading to the ILA being treated as a black box and not flattened.
         # One minor disadvantage is that resources reported don't capture the OOC black boxes; therefore print warning to user
@@ -110,7 +110,7 @@ for {set i 0}  {$i < $cfg(n_config)} {incr i} {
             puts "The final resource utilization should be obtained after Place and Route, and can be found in the directory reports."
             set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -objects [get_runs synth_1]
         }
-        
+
         # Create a project-local constraint file to take debugging constraints that we don't want to propagate to the repository.
         file mkdir "$proj_dir/$project.srcs/constrs_1"
         close [ open "$proj_dir/$project.srcs/constrs_1/local.xdc" w ]
@@ -127,7 +127,7 @@ for {set i 0}  {$i < $cfg(n_config)} {incr i} {
         # ADD USER-DEFINED LOGIC
         ########################################################################################################
         if {$cfg(load_apps) eq 1} {
-            set tmp_val "[format "\$vfpga_c$i\_$j"]" 
+            set tmp_val "[format "\$vfpga_c$i\_$j"]"
             set tmp_path "[format "%s" $tmp_val]"
             set cmd "[format "set tmp_path \"$tmp_path\""]"
             eval $cmd
