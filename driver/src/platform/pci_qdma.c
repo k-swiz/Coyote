@@ -814,8 +814,9 @@ int pci_probe(struct pci_dev *pdev, const struct pci_device_id *id) {
     // Memory map registers into the kernel space
     bd_data->stat_cnfg = ioremap(bd_data->bar_phys_addr[BAR_STAT_CONFIG] + FPGA_STAT_CNFG_OFFS, FPGA_STAT_CNFG_SIZE);
     bd_data->shell_cnfg = ioremap(bd_data->bar_phys_addr[BAR_SHELL_CONFIG] + FPGA_SHELL_CNFG_OFFS, FPGA_SHELL_CNFG_SIZE);
-
+    
     // Set-up the QDMA queues
+    dbg_info("enabling queues");
     ret_val = enable_queues(bd_data);
     if (ret_val) {
         dev_err(&pdev->dev, "error whilst probing DMA queues\n");

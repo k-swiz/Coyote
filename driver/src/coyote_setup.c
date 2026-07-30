@@ -334,11 +334,13 @@ struct file_operations vfpga_ops = {
 };
 
 #define FPGA_CLASS_MODE ((umode_t)(S_IRUGO | S_IWUGO))
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
+
+/** Eliminate the conditional compilation b/c RHEL backported this change to earlier kernels */
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
 static char *fpga_class_devnode(const struct device *dev, umode_t *mode)
-#else
-static char *fpga_class_devnode(struct device *dev, umode_t *mode)
-#endif
+//#else
+//static char *fpga_class_devnode(struct device *dev, umode_t *mode)
+//#endif
 {
     if (mode != NULL)
         *mode = FPGA_CLASS_MODE;
@@ -357,12 +359,13 @@ int alloc_vfpga_devices(struct bus_driver_data *data, dev_t dev) {
     }
     dbg_info("vFPGA device regions allocated, major number %d\n", data->vfpga_major);
 
+    /** This change was backported to RHEL 9 kernel */
     // Create a class for the vFPGA devicse; initialized in the function setup_vfpga_device
-    #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)        
+    //#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)        
         data->vfpga_class = class_create(data->vfpga_dev_name);   
-    #else        
-        data->vfpga_class = class_create(THIS_MODULE, data->vfpga_dev_name);    
-    #endif
+    //#else        
+    //    data->vfpga_class = class_create(THIS_MODULE, data->vfpga_dev_name);    
+    //#endif
     data->vfpga_class->devnode = fpga_class_devnode;
 
     // Allocate memory for the vFPGA device structure, which holds its information, locks, wait-queues, maps etc.
@@ -645,12 +648,13 @@ int alloc_reconfig_device(struct bus_driver_data *data, dev_t device) {
     }
     dbg_info("reconfig device regions allocated, major number %d\n", data->reconfig_major);
 
+    /** This change was backported to the RHEL9 kernel */
     // Create a class for the reconfiguration device; initialized in the function setup_reconfig_device
-    #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)        
+    //#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)        
         data->reconfig_class = class_create(data->reconfig_dev_name);    
-    #else        
-        data->reconfig_class = class_create(THIS_MODULE, data->reconfig_dev_name);  
-    #endif   
+    //#else        
+    //   data->reconfig_class = class_create(THIS_MODULE, data->reconfig_dev_name);  
+    //#endif   
     data->reconfig_class->devnode = fpga_class_devnode;
 
     // Allocate memory for the reconfiguration device structure, which holds its information, locks, wait-queues, maps etc.

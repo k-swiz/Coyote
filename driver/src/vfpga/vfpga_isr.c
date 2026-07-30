@@ -150,17 +150,18 @@ void vfpga_notify_handler(struct work_struct *work) {
 
     // Write the notification value to the eventfd; the value is polled on in the user-space (see bThread.cpp)
     
-    #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0)
+    /** Kernel updates were backported to RHEL 9 */
+    //#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0)
         // In recent kernel versions, the function signature of eventfd_signal changed.
         // The function is now a void and automatically increments the eventfd
         // counter by 1 instead of by a provided value.
         eventfd_signal(user_notifier[device->bd_data->dev_id][device->id][irq_not->ctid]);
         int ret_val = 1;
-    #else
+    //#else
         // Note, the return value is equal to the value written.
         // For polling in user-space to work, this value must be non-zero;
-        int ret_val = eventfd_signal(user_notifier[device->bd_data->dev_id][device->id][irq_not->ctid], 1);
-    #endif
+    //    int ret_val = eventfd_signal(user_notifier[device->bd_data->dev_id][device->id][irq_not->ctid], 1);
+    //#endif
 
     if (ret_val != 1) {
         pr_warn("could not signal eventfd\n");
