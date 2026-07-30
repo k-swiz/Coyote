@@ -1020,10 +1020,27 @@ proc create_hier_cell_gt_wrapper { parentCell nameHier } {
   create_bd_pin -dir I -type clk gtwiz_freerun_clk
 
   # Create instance: gtwiz_versal, and set properties
+#   set gtwiz_versal [ create_bd_cell -type ip -vlnv xilinx.com:ip:gtwiz_versal:1.0 gtwiz_versal ]
+#   set_property -dict [list \
+#     CONFIG.GT_TYPE {GTM} \
+#     CONFIG.INTF0_GT_SETTINGS(LR0_SETTINGS) {RXPROGDIV_FREQ_VAL 664.062 RX_REFCLK_FREQUENCY 322.265625 TXPROGDIV_FREQ_VAL 664.062 TX_REFCLK_FREQUENCY 322.265625} \
+#     CONFIG.INTF0_NO_OF_LANES {4} \
+#     CONFIG.INTF0_PARENTID {undef} \
+#     CONFIG.INTF0_PRESET {GTM-PAM4_Ethernet_53G} \
+#     CONFIG.INTF_PARENT_PIN_LIST {QUAD0_RX0 {{}} QUAD0_RX1 {{}} QUAD0_RX2 {{}} QUAD0_RX3 {{}} QUAD0_TX0 {{}} QUAD0_TX1 {{}} QUAD0_TX2 {{}} QUAD0_TX3 {{}}} \
+#     CONFIG.NO_OF_QUADS {1} \
+#     CONFIG.QUAD0_CH0_LOOPBACK_EN {true} \
+#     CONFIG.QUAD0_CH1_LOOPBACK_EN {true} \
+#     CONFIG.QUAD0_CH2_LOOPBACK_EN {true} \
+#     CONFIG.QUAD0_CH3_LOOPBACK_EN {true} \
+#     CONFIG.QUAD0_GT_GPIO_EN {false} \
+#     CONFIG.QUAD0_REFCLK_STRING {HSCLK0_LCPLLGTREFCLK0 refclk_PROT0_R0_322.265625183611_MHz_unique1} \
+#   ] $gtwiz_versal
+
   set gtwiz_versal [ create_bd_cell -type ip -vlnv xilinx.com:ip:gtwiz_versal:1.0 gtwiz_versal ]
   set_property -dict [list \
     CONFIG.GT_TYPE {GTM} \
-    CONFIG.INTF0_GT_SETTINGS(LR0_SETTINGS) {RXPROGDIV_FREQ_VAL 664.062 RX_REFCLK_FREQUENCY 322.265625 TXPROGDIV_FREQ_VAL 664.062 TX_REFCLK_FREQUENCY 322.265625} \
+    CONFIG.INTF0_GT_SETTINGS(LR0_SETTINGS) {RX_REFCLK_FREQUENCY 156.25 TX_REFCLK_FREQUENCY 156.25} \
     CONFIG.INTF0_NO_OF_LANES {4} \
     CONFIG.INTF0_PARENTID {undef} \
     CONFIG.INTF0_PRESET {GTM-PAM4_Ethernet_53G} \
@@ -1034,7 +1051,7 @@ proc create_hier_cell_gt_wrapper { parentCell nameHier } {
     CONFIG.QUAD0_CH2_LOOPBACK_EN {true} \
     CONFIG.QUAD0_CH3_LOOPBACK_EN {true} \
     CONFIG.QUAD0_GT_GPIO_EN {false} \
-    CONFIG.QUAD0_REFCLK_STRING {HSCLK0_LCPLLGTREFCLK0 refclk_PROT0_R0_322.265625183611_MHz_unique1} \
+    CONFIG.QUAD0_REFCLK_STRING {HSCLK0_LCPLLGTREFCLK0 refclk_PROT0_R0_156.25_MHz_unique1} \
   ] $gtwiz_versal
 
   set_property -dict [list \
