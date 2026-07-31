@@ -1183,7 +1183,7 @@ void* cThread::initRDMA(uint32_t buffer_size, uint16_t port, const char* server_
 
         char* service;
         if (asprintf(&service, "%d", port) < 0) { 
-            throw std::runtime_error("ERROR: asprintf() failed"); 
+            throw std::runtime_error("ERROR: asprintf() failed");
         }
 
         // Open the out-of-band connection to the server
@@ -1248,6 +1248,7 @@ void* cThread::initRDMA(uint32_t buffer_size, uint16_t port, const char* server_
         DBG3("cThread: initRDMA called from server side");
 
         // Accept connections on the specified port from the client(s)
+        std::cout << "Creating socket" << std::endl;
         sockfd = ::socket(AF_INET, SOCK_STREAM, 0); 
         if (sockfd == -1) {
             throw std::runtime_error("ERROR: Could not create a socket");
@@ -1258,6 +1259,7 @@ void* cThread::initRDMA(uint32_t buffer_size, uint16_t port, const char* server_
         server.sin_port = htons(port); 
         server.sin_addr.s_addr = INADDR_ANY; 
 
+        std::cout << "Binding socket" << std::endl;
         if (::bind(sockfd, (struct sockaddr*) &server, sizeof(server)) < 0) {
             throw std::runtime_error("ERROR: Could not bind a socket");
         }
@@ -1266,11 +1268,14 @@ void* cThread::initRDMA(uint32_t buffer_size, uint16_t port, const char* server_
             throw std::runtime_error("ERROR: Could not listen to a port: " + std::to_string(port));
         }
 
+        std::cout << "listening on socket" << std::endl;
         if (listen(sockfd, MAX_NUM_CLIENTS) == -1) {
             throw std::runtime_error("ERROR: sockfd listen failed");
         }
 
+        std::cout << "Awaiting connections..." << std::endl;
         if ((connfd = ::accept(sockfd, NULL, 0)) != -1) {
+            std::cout << "Connection received. Setting up buffers." << std::endl;
             is_connected = true;
             uint32_t n; 
 
