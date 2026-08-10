@@ -45,6 +45,11 @@ module cyt_top (
     (* io_buffer_type = "none" *) output  wire[3:0]           gt0_txn_out,
     (* io_buffer_type = "none" *) input  wire                 gt0_refclk_p,
     (* io_buffer_type = "none" *) input  wire                 gt0_refclk_n,
+{% if cnfg.fdev == 'vpk120' %}
+    output wire                                               qsfp0_resetn,
+    output wire                                               qsfp0_lpmode,
+    output wire                                               qsfp0_modseln,
+{% endif %}
 {% if cnfg.fdev == 'u250' or cnfg.fdev == 'u200' %}
     (* io_buffer_type = "none" *) output wire                 qsfp0_resetn,
     (* io_buffer_type = "none" *) output wire                 qsfp0_lpmode,
@@ -317,7 +322,6 @@ module cyt_top (
     output wire[PCIE_GT_BITS-1:0]   pcie_txp
     {% endif %}
 );
-
     // Static layer clocks & reset
     wire xclk;
     wire [0:0] xresetn;
@@ -360,8 +364,15 @@ module cyt_top (
 {% if cnfg.fdev == 'u280' or cnfg.fdev == 'u50d'%}
     // The notorius D32 pin
     assign fpga_burn = 1'b0;
-
 {% endif %}
+
+{% if cnfg.fdev == 'vpk120' %}
+    // Assign QSFP-DD control signals
+    assign qsfp0_resetn = 1'b1;
+    assign qsfp0_lpmode = 1'b0;
+    assign qsfp0_modseln = 1'b0;
+{% endif %}
+
     // ================-----------------------------------------------------------------
     // STATIC WRAPPER
     // ================-----------------------------------------------------------------
