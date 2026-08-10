@@ -766,11 +766,7 @@ proc cr_bd_design_lpddr { parentCell } {
 ########################################################################################################
 # Create address segments
 ########################################################################################################
-
-  # Create address segments
-  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces S00_AXI] [get_bd_addr_segs lpddr_noc_0/S00_AXI/C3_DDR_LOW0x2] -force
-  assign_bd_address -offset 0x000800000000 -range 0x000180000000 -target_address_space [get_bd_addr_spaces S00_AXI] [get_bd_addr_segs lpddr_noc_0/S00_AXI/C3_DDR_LOW1x2] -force
-  assign_bd_address -offset 0x050000000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces S00_AXI] [get_bd_addr_segs lpddr_noc_1/S00_INI/C0_DDR_CH1] -force
+   assign_bd_address
 
    # Restore current instance
    current_bd_instance $oldCurInst
