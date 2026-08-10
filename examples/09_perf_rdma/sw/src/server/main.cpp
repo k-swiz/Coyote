@@ -97,21 +97,28 @@ int main(int argc, char *argv[])  {
 
     // Allocate Coyothe threa and set-up RDMA connections, buffer etc.
     // initRDMA is explained in more detail in client/main.cpp
+    std::cout << "Creating Coyote Thread (vfpga: " << DEFAULT_VFPGA_ID << ")" << std::endl;
     coyote::cThread coyote_thread(DEFAULT_VFPGA_ID, getpid());
+    std::cout << "Initializing RDMA (size: " << max_size << ", port: " << coyote::DEF_PORT << ")" << std::endl;
     int *mem = (int *) coyote_thread.initRDMA(max_size, coyote::DEF_PORT);
     if (!mem) { throw std::runtime_error("Could not allocate memory; exiting..."); }
 
     // Benchmark sweep; exactly like done in the client code
+    std::cout << "Begin benchmark..." << std::endl;
     HEADER("RDMA BENCHMARK: SERVER");
     unsigned int curr_size = min_size;
+    std::cout << "curr_size: " << curr_size << std::endl;
     while(curr_size <= max_size) {
         coyote::rdmaSg sg = { .len = curr_size };
+	std::cout << "run_bench 1" << std::endl;
         run_bench(coyote_thread, sg, mem, N_THROUGHPUT_REPS, n_runs, operation);
+	std::cout << "run_bench 2" << std::endl;
         run_bench(coyote_thread, sg, mem, N_LATENCY_REPS, n_runs, operation);
         curr_size *= 2;
     }
 
     // Final sync and exit
+    std::cout << "final sync" << std::endl;
     coyote_thread.connSync(IS_CLIENT);
     return EXIT_SUCCESS;
 }
