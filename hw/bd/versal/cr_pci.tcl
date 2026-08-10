@@ -418,6 +418,7 @@ proc cr_bd_design_static { parentCell } {
           PS_USE_PS_NOC_PCI_1 {1} \
         } \
         CONFIG.DEVICE_INTEGRITY_MODE {Custom} \
+        CONFIG.PS_BOARD_INTERFACE {ps_pmc_fixed_io} \
         CONFIG.PS_PMC_CONFIG { \
           BOOT_MODE {Custom} \
           CLOCK_MODE {Custom} \
@@ -442,7 +443,7 @@ proc cr_bd_design_static { parentCell } {
           PMC_USE_NOC_PMC_AXI0 {1} \
           PMC_USE_PMC_NOC_AXI0 {1} \
           PS_USE_STARTUP {1} \
-          PS_BOARD_INTERFACE {Custom} \
+          PS_BOARD_INTERFACE {ps_pmc_fixed_io} \
           PS_I2C0_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 46 .. 47}}} \
           PS_I2C1_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 44 .. 45}}} \
           PS_I2CSYSMON_PERIPHERAL {{ENABLE 0} {IO {PMC_MIO 39 .. 40}}} \
@@ -514,6 +515,7 @@ proc cr_bd_design_static { parentCell } {
           PS_USE_PS_NOC_PCI_1 {1} \
         } \
         CONFIG.DEVICE_INTEGRITY_MODE {Custom} \
+        CONFIG.PS_BOARD_INTERFACE {ps_pmc_fixed_io} \
         CONFIG.PS_PMC_CONFIG { \
           BOOT_MODE {Custom} \
           CLOCK_MODE {Custom} \
@@ -538,7 +540,7 @@ proc cr_bd_design_static { parentCell } {
           PMC_USE_NOC_PMC_AXI0 {1} \
           PMC_USE_PMC_NOC_AXI0 {1} \
           PS_USE_STARTUP {1} \
-          PS_BOARD_INTERFACE {Custom} \
+          PS_BOARD_INTERFACE {ps_pmc_fixed_io} \
           PS_I2C0_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 46 .. 47}}} \
           PS_I2C1_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 44 .. 45}}} \
           PS_I2CSYSMON_PERIPHERAL {{ENABLE 0} {IO {PMC_MIO 39 .. 40}}} \
