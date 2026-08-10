@@ -181,7 +181,10 @@ proc create_hier_cell_bd_clock_reset_ctrl { parentCell nameHier } {
 
   # Create instance: diff_buff, and set properties
   set diff_buff [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 diff_buff ]
-  set_property CONFIG.C_BUF_TYPE {IBUFDS_GTME5} $diff_buff
+  set_property -dict [list \
+    CONFIG.C_BUF_TYPE {IBUFDS_GTME5} \
+    CONFIG.C_DIVBY2 {false} \
+  ] $diff_buff
 
 
   # Create instance: bufgt_dcmac, and set properties
@@ -242,7 +245,7 @@ proc create_hier_cell_bd_clock_reset_ctrl { parentCell nameHier } {
     CONFIG.CLKOUT_MATCHED_ROUTING {false,false,false,false,false,false,false} \
     CONFIG.CLKOUT_PORT {clk_out1,clk_out2,clk_out3,clk_out4,clk_out5,clk_out6,clk_out7} \
     CONFIG.CLKOUT_REQUESTED_DUTY_CYCLE {50.000,50.000,50.000,50.000,50.000,50.000,50.000} \
-    CONFIG.CLKOUT_REQUESTED_OUT_FREQUENCY {782,390.625,100,100.000,100.000,100.000,100.000} \
+    CONFIG.CLKOUT_REQUESTED_OUT_FREQUENCY {400,200,100,100.000,100.000,100.000,100.000} \
     CONFIG.CLKOUT_REQUESTED_PHASE {0.000,0.000,0.000,0.000,0.000,0.000,0.000} \
     CONFIG.CLKOUT_USED {true,true,true,false,false,false,false} \
     CONFIG.OVERRIDE_PRIMITIVE {false} \
@@ -587,19 +590,36 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
 #     puts "ERROR: Unsupported FPGA part: $cnfg(fdev)"
 #     exit 1
 #   }
+  # Create instance: dcmac, and set properties
+#   set dcmac [ create_bd_cell -type ip -vlnv xilinx.com:ip:dcmac:3.2 dcmac ]
+#   set_property -dict [list \
+#     CONFIG.DCMAC_DATA_PATH_INTERFACE_C0 {195MHz Upto 3x100G Ports} \
+#     CONFIG.DCMAC_LOCATION_C0 {DCMAC_X0Y0} \
+#     CONFIG.FEC_SLICE0_CFG_C0 {RS(528) CL91} \
+#     CONFIG.GT_REF_CLK_FREQ_C0 {156.25} \
+#     CONFIG.IS_GT_WIZ_OLD {0} \
+#     CONFIG.MAC_PORT0_CONFIG_C0 {100CAUI-4} \
+#     CONFIG.MAC_PORT0_ENABLE_AN_LT_C0 {0} \
+#     CONFIG.MAC_PORT0_RX_STRIP_C0 {1} \
+#     CONFIG.MAC_PORT1_ENABLE_C0 {0} \
+#     CONFIG.MAC_PORT2_ENABLE_C0 {0} \
+#     CONFIG.TIMESTAMP_CLK_PERIOD_NS {6.4} \
+#     CONFIG.USE_AXIS_ALMOSTFULL_INDICATION {0} \
+#   ] $dcmac
 
-  set dcmac [ create_bd_cell -type ip -vlnv $dcmac_vlnv dcmac ]
+  # Create instance: dcmac, and set properties
+  set dcmac [ create_bd_cell -type ip -vlnv xilinx.com:ip:dcmac:3.2 dcmac ]
   set_property -dict [list \
+    CONFIG.DCMAC_DATA_PATH_INTERFACE_C0 {195MHz Upto 3x100G Ports} \
     CONFIG.DCMAC_LOCATION_C0 {DCMAC_X0Y0} \
+    CONFIG.FEC_SLICE0_CFG_C0 {RS(528) CL91} \
     CONFIG.GT_REF_CLK_FREQ_C0 {156.25} \
     CONFIG.IS_GT_WIZ_OLD {0} \
-    CONFIG.MAC_PORT0_CONFIG_C0 {100GAUI-4} \
+    CONFIG.MAC_PORT0_CONFIG_C0 {100CAUI-4} \
+    CONFIG.MAC_PORT0_ENABLE_AN_LT_C0 {0} \
     CONFIG.MAC_PORT0_RX_STRIP_C0 {1} \
-    CONFIG.MAC_PORT1_RX_STRIP_C0 {1} \
+    CONFIG.MAC_PORT1_ENABLE_C0 {0} \
     CONFIG.MAC_PORT2_ENABLE_C0 {0} \
-    CONFIG.MAC_PORT3_ENABLE_C0 {0} \
-    CONFIG.MAC_PORT4_ENABLE_C0 {0} \
-    CONFIG.MAC_PORT5_ENABLE_C0 {0} \
     CONFIG.USE_AXIS_ALMOSTFULL_INDICATION {0} \
   ] $dcmac
 
@@ -627,7 +647,7 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
    }
 
   set_property -dict [ list \
-   CONFIG.FREQ_HZ {391000600} \
+   CONFIG.FREQ_HZ {200000000} \
  ] [get_bd_intf_pins /dcmac_wrapper/seg_to_axis/m_axis0_pkt_out]
 
   # Create instance: const_0, and set properties
@@ -841,9 +861,9 @@ proc create_hier_cell_dcmac_wrapper { parentCell nameHier } {
   [get_bd_pins dcmac/ctl_vl_marker_id18]
   connect_bd_net -net dcmac200g_ctl_port_ctl_tx_vl_marker_id19  [get_bd_pins dcmac200g_ctl_port/ctl_tx_vl_marker_id19] \
   [get_bd_pins dcmac/ctl_vl_marker_id19]
-  connect_bd_net -net dcmac200g_ctl_port_default_vl_length_200GE_or_400GE  [get_bd_pins dcmac200g_ctl_port/default_vl_length_200GE_or_400GE] \
-  [get_bd_pins dcmac/ctl_rx_custom_vl_length_minus1] \
-  [get_bd_pins dcmac/ctl_tx_custom_vl_length_minus1]
+  connect_bd_net -net dcmac200g_ctl_port_default_vl_length_100GE  [get_bd_pins dcmac200g_ctl_port/default_vl_length_100GE] \
+  [get_bd_pins dcmac/ctl_tx_custom_vl_length_minus1] \
+  [get_bd_pins dcmac/ctl_rx_custom_vl_length_minus1]
   connect_bd_net -net dcmac_rx_axis_tdata0  [get_bd_pins dcmac/rx_axis_tdata0] \
   [get_bd_pins seg_to_axis/Seg2UnSegDat0_in]
   connect_bd_net -net dcmac_rx_axis_tdata1  [get_bd_pins dcmac/rx_axis_tdata1] \
@@ -1037,13 +1057,14 @@ proc create_hier_cell_gt_wrapper { parentCell nameHier } {
 #     CONFIG.QUAD0_REFCLK_STRING {HSCLK0_LCPLLGTREFCLK0 refclk_PROT0_R0_322.265625183611_MHz_unique1} \
 #   ] $gtwiz_versal
 
+  # Create instance: gtwiz_versal, and set properties
   set gtwiz_versal [ create_bd_cell -type ip -vlnv xilinx.com:ip:gtwiz_versal:1.0 gtwiz_versal ]
   set_property -dict [list \
     CONFIG.GT_TYPE {GTM} \
-    CONFIG.INTF0_GT_SETTINGS(LR0_SETTINGS) {RX_REFCLK_FREQUENCY 156.25 TX_REFCLK_FREQUENCY 156.25} \
+    CONFIG.INTF0_GT_SETTINGS(LR0_SETTINGS) {RXPROGDIV_FREQ_VAL 644.531 TXPROGDIV_FREQ_VAL 644.531} \
     CONFIG.INTF0_NO_OF_LANES {4} \
     CONFIG.INTF0_PARENTID {undef} \
-    CONFIG.INTF0_PRESET {GTM-PAM4_Ethernet_53G} \
+    CONFIG.INTF0_PRESET {GTM-NRZ_Ethernet_25G} \
     CONFIG.INTF_PARENT_PIN_LIST {QUAD0_RX0 {{}} QUAD0_RX1 {{}} QUAD0_RX2 {{}} QUAD0_RX3 {{}} QUAD0_TX0 {{}} QUAD0_TX1 {{}} QUAD0_TX2 {{}} QUAD0_TX3 {{}}} \
     CONFIG.NO_OF_QUADS {1} \
     CONFIG.QUAD0_CH0_LOOPBACK_EN {true} \
