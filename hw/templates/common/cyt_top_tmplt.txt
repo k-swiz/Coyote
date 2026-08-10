@@ -366,12 +366,6 @@ module cyt_top (
     assign fpga_burn = 1'b0;
 {% endif %}
 
-{% if cnfg.fdev == 'vpk120' %}
-    // Assign QSFP-DD control signals
-    assign qsfp0_resetn = 1'b1;
-    assign qsfp0_lpmode = 1'b0;
-    assign qsfp0_modseln = 1'b0;
-{% endif %}
 
     // ================-----------------------------------------------------------------
     // STATIC WRAPPER
@@ -478,7 +472,12 @@ module cyt_top (
         .qsfp1_lpmode(qsfp1_lpmode),
         .qsfp1_modseln(qsfp1_modseln),
     {% endif %}
-
+   {% if cnfg.fdev == 'vpk120' %}
+      // Assign QSFP-DD control signals
+      .qsfp0_resetn(qsfp0_resetn),
+      .qsfp0_lpmode(qsfp0_lpmode),
+      .qsfp0_modseln(qsfp0_modseln),
+   {% endif %}
         // ISR
         .m_usr_irq(usr_irq),
 

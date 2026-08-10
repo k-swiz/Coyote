@@ -55,7 +55,11 @@ module shell_top (
     (* io_buffer_type = "none" *) output wire                               qsfp1_lpmode,
     (* io_buffer_type = "none" *) output wire                               qsfp1_modseln,
 {% endif %}
-
+{% if cnfg.fdev == 'vpk120' %}
+    output logic                                                            qsfp0_resetn,
+    output wire                                                             qsfp0_lpmode,
+    output wire                                                             qsfp0_modseln,
+{% endif %}
     // ISR
     (* io_buffer_type = "none" *) output logic [14:0]                       m_usr_irq,
 
@@ -547,6 +551,34 @@ module shell_top (
         .O(qsfp1_modseln),
         .I(1'b1)
     );
+{% endif %}
+
+{% if cnfg.fdev == 'vpk120' %}
+   //Assuming aclk is 250MHz
+   localparam int unsigned QSFP_RESET_DELAY_CYCLES = 50_000;
+
+   logic [$clog2(QSFP_RESET_DELAY_CYCLES)-1:0] qsfp_reset_cnt;
+
+   always_ff @(posedge aclk or negedge aresetn) begin
+      if (!aresetn) begin
+         qsfp0_resetn    <= 1'b0;
+         qsfp_reset_cnt  <= '0;
+      end
+      else if (qsfp_reset_cnt < QSFP_RESET_DELAY_CYCLES - 1) begin
+         // Reset is complete. Wait another 200 us.
+         qsfp0_resetn    <= 1'b0;
+         qsfp_reset_cnt  <= qsfp_reset_cnt + 1'b1;
+      end
+      else begin
+         // 200 us have elapsed since aresetn
+         qsfp0_resetn    <= 1'b1;
+         qsfp_reset_cnt  <= qsfp_reset_cnt;
+      end
+   end
+
+    // Assign other QSFP-DD control signals
+    assign qsfp0_lpmode = 1'b0;
+    assign qsfp0_modseln = 1'b0;
 {% endif %}
 
     // ================-----------------------------------------------------------------
