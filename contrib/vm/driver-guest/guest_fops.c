@@ -20,6 +20,7 @@
  */
 
 #include "guest_fops.h"
+#include <linux/printk.h>
 
 /**
  * @brief file operations that handle this device
@@ -42,6 +43,7 @@ struct file_operations fops = {
  */
 int guest_open(struct inode *inode, struct file *f)
 {
+    printk(KERN_ALERT "entering Coyote:guest_open");
     struct vfpga *d;
 
     d = container_of(inode->i_cdev, struct vfpga, cdev);
@@ -50,6 +52,8 @@ int guest_open(struct inode *inode, struct file *f)
     dbg_info("fpga device acquired\n");
 
     f->private_data = (void *)d;
+
+    printk(KERN_ALERT "exiting Coyote:guest_open");
 
     return 0;
 }
@@ -65,6 +69,7 @@ int guest_open(struct inode *inode, struct file *f)
  */
 int guest_release(struct inode *inode, struct file *f)
 {
+    printk(KERN_ALERT "entering Coyote:guest_release");
     struct vfpga *d;
 
     d = (struct vfpga *)f->private_data;
@@ -74,6 +79,7 @@ int guest_release(struct inode *inode, struct file *f)
     guest_put_all_user_pages(d, 1);
 
     dbg_info("fpga device released");
+    printk(KERN_ALERT "exiting Coyote:guest_release");
     return 0;
 }
 
@@ -161,6 +167,7 @@ static void unregister_pid(struct vfpga *d, pid_t cpid)
  */
 long guest_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
+    printk(KERN_ALERT "entering Coyote:guest_ioctl (too many exit paths)");
     struct vfpga *d;
     int ret_val;
     uint64_t tmp[MAX_USER_ARGS];
@@ -283,6 +290,7 @@ long guest_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
  */
 int guest_mmap(struct file *f, struct vm_area_struct *vma)
 {
+    printk(KERN_ALERT "entering Coyote:guest_mmap (too many return paths)");
     struct vfpga *d;
     unsigned long vaddr;
     unsigned long target_addr;

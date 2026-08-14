@@ -20,6 +20,7 @@
  */
 
 #include "vfpga_ops.h"
+#include <linux/printk.h>
 
 // Hash map holding the mapping between host process ID (hpid) and Coyote thread IDs (ctid) for each vFPGA device 
 struct hlist_head hpid_ctid_map[MAX_FPGA_DEVICES][MAX_N_REGIONS][1 << (PID_HASH_TABLE_ORDER)];
@@ -45,8 +46,10 @@ int vfpga_dev_open(struct inode *inode, struct file *file) {
 }
 
 int vfpga_dev_release(struct inode *inode, struct file *file) {
+    printk(KERN_ALERT "entering vfpga_dev_release");
     int bkt;
     struct hpid_ctid_pages *tmp_h_entry;
+    struct hlist_node *tmp;
     struct list_head *l_p, *l_n;
 
     // Obtain vFPGA device from file private data (set during open) and check device is not NULL
@@ -94,6 +97,8 @@ int vfpga_dev_release(struct inode *inode, struct file *file) {
     int minor = iminor(inode);
     dbg_info("vFPGA device %d released, spid %d, ref cnt %d\n", minor, current->pid, device->ref_cnt);
 
+    printk(KERN_ALERT "exiting vfpga_dev_release");
+
     return 0;
 }
 
@@ -115,6 +120,7 @@ long vfpga_dev_ioctl_impl(struct vfpga_dev *device, unsigned int command, unsign
         // Args: host process ID (hpid)
         // Return: Coyote thread ID (ctid)
         case IOCTL_REGISTER_CTID:
+            printk(KERN_ALERT "entering IOCTL_REGISTER_CTID case\n");
             if (from_kernel) {
                 memcpy(&tmp, (unsigned long *)arg, sizeof(unsigned long));
                 ret_val = 0;
@@ -201,6 +207,7 @@ long vfpga_dev_ioctl_impl(struct vfpga_dev *device, unsigned int command, unsign
         // In essence, performing the opposite of the IOCTL_REGISTER_CTID call
         // Args: Coyote thread ID (ctid)
         case IOCTL_UNREGISTER_CTID:
+            printk(KERN_ALERT "entering IOCTL_UNREGISTER_CTID case\n");
             if (from_kernel) {
                 memcpy(&tmp, (unsigned long *)arg, sizeof(unsigned long));
                 ret_val = 0;
@@ -265,6 +272,7 @@ long vfpga_dev_ioctl_impl(struct vfpga_dev *device, unsigned int command, unsign
         // This file descriptor is used for sending user interrupts to the user space (see vfpga_uisr.c)
         // Args: Coyote thread ID (ctid), Event file descriptor (efd)
         case IOCTL_REGISTER_EVENTFD:
+            printk(KERN_ALERT "entering IOCTL_REGISTER_EVENTFD case\n");
             if (from_kernel) {
                 memcpy(&tmp, (unsigned long *)arg, 2 * sizeof(uint64_t));
                 ret_val = 0;
@@ -284,6 +292,7 @@ long vfpga_dev_ioctl_impl(struct vfpga_dev *device, unsigned int command, unsign
         // Unregisters a previously registered event file descriptor (efd) for a Coyote thread ID (ctid)
         // Args: Coyote thread ID (ctid)
         case IOCTL_UNREGISTER_EVENTFD:
+            printk(KERN_ALERT "entering IOCTL_UNREGISTER_EVENTFD case\n");
             if (from_kernel) {
                 memcpy(&tmp, (unsigned long *)arg, sizeof(uint64_t));
                 ret_val = 0;
@@ -300,6 +309,7 @@ long vfpga_dev_ioctl_impl(struct vfpga_dev *device, unsigned int command, unsign
         // Explicit mapping of user pages; will map the user pages into the vFPGA's TLB and set-up corresponding card buffers, if enabled
         // Args: Virtual address, length, Coyote thread ID (ctid), target memory block (applicable only to Versal devices)
         case IOCTL_MAP_USER_MEM:
+            printk(KERN_ALERT "entering IOCTL_MAP_USER_MEM case\n");
             if (from_kernel) {
                 memcpy(&tmp, (unsigned long *)arg, 4 * sizeof(unsigned long));
                 ret_val = 0;
@@ -337,6 +347,7 @@ long vfpga_dev_ioctl_impl(struct vfpga_dev *device, unsigned int command, unsign
         // Explictily unmap (release) user pages 
         // Args: Virtual address, Coyote thread ID (ctid)
         case IOCTL_UNMAP_USER_MEM:
+            printk(KERN_ALERT "entering IOCTL_UNMAP_USER_MEM case\n");
             if (from_kernel) {
                 memcpy(&tmp, (unsigned long *)arg, 2 * sizeof(unsigned long));
                 ret_val = 0; 
@@ -364,6 +375,7 @@ long vfpga_dev_ioctl_impl(struct vfpga_dev *device, unsigned int command, unsign
         // Map (attach) DMA Buffer
         // Args: DMA Buffer file descriptor (fd), virtual address, Coyote thread ID (ctid)
         case IOCTL_MAP_DMABUF:
+            printk(KERN_ALERT "entering IOCTL_MAP_DMABUF case\n");
             #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
             if (from_kernel) {
                 memcpy(&tmp, (unsigned long *)arg, 4 * sizeof(unsigned long));
@@ -399,6 +411,7 @@ long vfpga_dev_ioctl_impl(struct vfpga_dev *device, unsigned int command, unsign
         // Unmap (detach) DMA Buffer
         // Args: DMA Buffer file descriptor (fd), Coyote thread ID (ctid)
         case IOCTL_UNMAP_DMABUF:
+            printk(KERN_ALERT "entering IOCTL_UNMAP_DMABUF case\n");
             #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
             if (from_kernel) {
                 memcpy(&tmp, (unsigned long *)arg, 2 * sizeof(unsigned long));
@@ -667,6 +680,7 @@ long vfpga_dev_ioctl(struct file *file, unsigned int command, unsigned long arg)
 }
 
 int vfpga_dev_mmap(struct file *file, struct vm_area_struct *vma) {
+
     // Obtain vFPGA device from file private data (set during open) and check device is not NULL
     struct vfpga_dev *device = (struct vfpga_dev *) file->private_data;
     BUG_ON(!device);

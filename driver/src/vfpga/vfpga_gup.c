@@ -650,68 +650,100 @@ int tlb_put_user_pages(struct vfpga_dev *device, uint64_t vaddr, int32_t ctid, p
 int tlb_put_user_pages_ctid(struct vfpga_dev *device, int32_t ctid, pid_t hpid, int dirtied) {
     int i, bkt;
     struct user_pages *tmp_entry;
+    struct hlist_node *tmp;
 
     BUG_ON(!device);
     struct bus_driver_data *bd_data = device->bd_data;
     BUG_ON(!bd_data);
 
-    hash_for_each(user_buff_map[device->bd_data->dev_id][device->id][ctid], bkt, tmp_entry, entry) {
+    // hash_for_each_safe should be used if deleting entries during interation
+    hash_for_each_safe(user_buff_map[device->bd_data->dev_id][device->id][ctid], bkt, tmp, tmp_entry, entry) {
+        if(!tmp_entry){
+            continue;
+        }
+
         // Unmap from TLB
         tlb_unmap_gup(device, tmp_entry, hpid);
         
         // Release card memory
         if(bd_data->en_mem) {
-            free_card_memory(device, tmp_entry->cpages, tmp_entry->n_pages, tmp_entry->huge);
-            vfree(tmp_entry->cpages);
+            if(tmp_entry->cpages){
+                free_card_memory(device, tmp_entry->cpages, tmp_entry->n_pages, tmp_entry->huge);
+                vfree(tmp_entry->cpages);
+                tmp_entry->cpages = NULL;
+            }
         }
 
         if(tmp_entry->dma_attach) {
             #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)  
-                // Unmap buffer from vFPGA bus address space
-                dma_resv_lock(tmp_entry->buf->resv, NULL);
-                dma_buf_unmap_attachment(tmp_entry->dma_attach, tmp_entry->sgt, DMA_BIDIRECTIONAL);
-                dma_resv_unlock(tmp_entry->buf->resv);
+                if(tmp_entry->buf && tmp_entry->sgt){
+                    // Unmap buffer from vFPGA bus address space
+                    dma_resv_lock(tmp_entry->buf->resv, NULL);
+                    dma_buf_unmap_attachment(tmp_entry->dma_attach, tmp_entry->sgt, DMA_BIDIRECTIONAL);
+                    dma_resv_unlock(tmp_entry->buf->resv);
+                }
 
                 // Detach vFPGA from DMABuff
-                kfree(tmp_entry->dma_attach->importer_priv);
-                dma_buf_detach(tmp_entry->buf, tmp_entry->dma_attach);
+                if(tmp_entry->dma_attach->importer_priv){
+                    kfree(tmp_entry->dma_attach->importer_priv);
+                }
+
+                if(tmp_entry->buf){
+                    dma_buf_detach(tmp_entry->buf, tmp_entry->dma_attach);
+                }
 
                 // Decrease DMABuf refcount
-                dma_buf_put(tmp_entry->buf);
+                if(tmp_entry->buf){
+                    dma_buf_put(tmp_entry->buf);
+                }
             #else
                 pr_warn("Error releasing user pages! DMA Bufs for Coyote GPU integration is only available on Linux >= 6.2.0. If you're seeing this message and your driver compiled: this is likely a bug; please report it to the Coyote team\n");
                 return -1;
             #endif
         } else {
-            if (dirtied) {
-                for (i = 0; i < tmp_entry->n_pages; i++) {
-                    SetPageDirty(tmp_entry->pages[i]);
+            if(tmp_entry->pages){
+                if (dirtied) {
+                    for (i = 0; i < tmp_entry->n_pages; i++) {
+                        if(tmp_entry->pages[i]){
+                            SetPageDirty(tmp_entry->pages[i]);
+                        }
+                    }
                 }
-            }
             
-            // Unmap DMA
-            int pg_inc = tmp_entry->huge ? device->bd_data->n_pages_in_huge : 1;
-            int pg_size = tmp_entry->huge ? device->bd_data->ltlb_meta->page_size : PAGE_SIZE;
-            for (int i = 0; i < tmp_entry->n_pages; i+=pg_inc) {
-                dma_unmap_single(&device->bd_data->pci_dev->dev, tmp_entry->hpages[i], pg_size, DMA_BIDIRECTIONAL);
-            }
-            
-            // Unpin the pages
-            #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
-                unpin_user_pages(tmp_entry->pages, tmp_entry->n_pages);
-            #else
-                for(int i = 0; i < tmp_entry->n_pages; i++) {
-                    put_page(tmp_entry->pages[i]);
+                // Unmap DMA
+                int pg_inc = tmp_entry->huge ? device->bd_data->n_pages_in_huge : 1;
+                int pg_size = tmp_entry->huge ? device->bd_data->ltlb_meta->page_size : PAGE_SIZE;
+                if(tmp_entry->hpages){
+                    for (int i = 0; i < tmp_entry->n_pages; i+=pg_inc) {
+                        if(tmp_entry->hpages[i]){
+                            dma_unmap_single(&device->bd_data->pci_dev->dev, tmp_entry->hpages[i], pg_size, DMA_BIDIRECTIONAL);
+                        }
+                    }
                 }
-            #endif
-                
             
-            // Release memory to hold pages
-            vfree(tmp_entry->pages);
-        }
+                // Unpin the pages
+                #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
+                    unpin_user_pages(tmp_entry->pages, tmp_entry->n_pages);
+                #else
+                    for(int i = 0; i < tmp_entry->n_pages; i++) {
+                        if(tmp_entry->pages[i]){
+                            put_page(tmp_entry->pages[i]);
+                        }
+                    }
+                #endif
+            
+                // Release memory to hold pages
+                vfree(tmp_entry->pages);
+                tmp_entry->pages = NULL;
+            }
 
-        // Release memory to hold physical addresses
-        vfree(tmp_entry->hpages);
+            if(tmp_entry->hpages){
+                // Release memory to hold physical addresses
+                vfree(tmp_entry->hpages);
+                tmp_entry->hpages = NULL;
+            }
+
+        }
 
         // Remove from map
         hash_del(&tmp_entry->entry);
